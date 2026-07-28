@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영어 문장 끊어읽기 &amp; 청크 분석 연습</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; min-height: 100vh; display: flex; justify-content: center; padding: 2rem 1rem; color: #2c2c2a; }
+.app { max-width: 860px; width: 100%; }
+h1 { font-size: 21px; font-weight: 600; color: #1a1a18; margin-bottom: 0.25rem; }
+.subtitle { font-size: 14px; color: #888; margin-bottom: 1.25rem; }
+
+.tabs { display: flex; gap: 6px; margin-bottom: 1.1rem; border-bottom: 1px solid #e8e8e6; }
+.tab-btn { background: transparent; border: none; padding: 0.65rem 0.9rem; font-size: 14px; font-weight: 500; color: #888; cursor: pointer; border-bottom: 2px solid transparent; }
+.tab-btn:hover { color: #185FA5; }
+.tab-btn.active { color: #185FA5; border-bottom-color: #185FA5; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.card { background: #fff; border: 1px solid #e8e8e6; border-radius: 14px; padding: 1.25rem 1.4rem; margin-bottom: 1.25rem; }
+.card h2 { font-size: 15px; font-weight: 600; margin-bottom: 0.75rem; color: #1a1a18; }
+.card h3 { font-size: 13px; font-weight: 600; margin: 1rem 0 0.5rem; color: #444; }
+.hint { font-size: 12.5px; color: #999; line-height: 1.6; margin-bottom: 0.75rem; }
+.hint code { background: #f0f0ee; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
+label { display: block; font-size: 12.5px; color: #666; margin-bottom: 4px; font-weight: 500; }
+input[type=text], textarea, select {
+  width: 100%; border: 1px solid #dcdcd8; border-radius: 8px; padding: 0.6rem 0.75rem; font-size: 14px; font-family: inherit; background: #fafaf8; color: #1a1a18;
+}
+input:focus, textarea:focus, select:focus { outline: none; border-color: #185FA5; background: #fff; }
+textarea { resize: vertical; min-height: 70px; line-height: 1.6; }
+.field { margin-bottom: 0.85rem; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+.btn { background: #fff; border: 1px solid #ccc; border-radius: 8px; padding: 0.6rem 1.1rem; font-size: 13.5px; cursor: pointer; color: #444; font-weight: 500; }
+.btn:hover { background: #f0f0ee; }
+.btn.primary { background: #185FA5; color: #fff; border-color: transparent; }
+.btn.primary:hover { background: #0c447c; }
+.btn.danger { color: #b33; border-color: #eecccc; }
+.btn.danger:hover { background: #fdf0f0; }
+.btn.small { padding: 0.35rem 0.7rem; font-size: 12.5px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.5rem; align-items: center; }
+
+/* level pills */
+.level-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.1rem; }
+.level-pill { background: #fff; border: 1px solid #dcdcd8; border-radius: 999px; padding: 0.45rem 0.95rem; font-size: 13px; font-weight: 600; color: #666; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.level-pill:hover { border-color: #185FA5; color: #185FA5; }
+.level-pill.active { background: #185FA5; border-color: #185FA5; color: #fff; }
+.level-pill .prog { font-size: 10.5px; font-weight: 500; opacity: 0.85; }
+
+/* tag colors */
+.tag-S { background: #eaf1fb; color: #185FA5; border: 1px solid #b9d3f0; }
+.tag-V { background: #fdecec; color: #c0392b; border: 1px solid #f3c2c2; }
+.tag-O { background: #eaf7ee; color: #1e8449; border: 1px solid #bfe6cc; }
+.tag-C { background: #f3ecfb; color: #7d3c98; border: 1px solid #d9c2ef; }
+.tag-M { background: #fdf3e3; color: #b9770e; border: 1px solid #f2ddb0; }
+
+.legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 0.9rem; font-size: 12.5px; }
+.legend-item { display: flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-weight: 600; }
+
+/* sentence chunk display */
+.chunk-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin: 0.9rem 0 0.35rem; }
+.chunk-box { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.chunk-word { border-radius: 8px; padding: 0.4rem 0.65rem; font-size: 15px; font-weight: 500; line-height: 1.3; }
+.chunk-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; padding: 1px 7px; border-radius: 999px; }
+.sent-meta { font-size: 12.5px; color: #888; margin-top: 0.4rem; }
+.sent-grammar { display: inline-block; background: #f0f0ee; color: #555; border-radius: 6px; padding: 1px 8px; font-size: 11.5px; margin-right: 6px; }
+.sent-note { font-size: 12px; color: #a67c00; background: #fffaf0; border: 1px solid #f2e2b8; border-radius: 8px; padding: 0.5rem 0.7rem; margin-top: 0.5rem; line-height: 1.55; }
+
+/* study list */
+.sentence-item { border: 1px solid #e8e8e6; border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 10px; cursor: pointer; }
+.sentence-item:hover { border-color: #185FA5; }
+.sentence-item.open { border-color: #185FA5; background: #fafcff; }
+.sentence-item .sent-text { font-size: 14.5px; font-weight: 500; color: #1a1a18; }
+.sentence-item .sent-summary { font-size: 12px; color: #999; margin-top: 3px; }
+.custom-badge { background: #185FA5; color: #fff; border-radius: 5px; padding: 0 6px; font-size: 10.5px; margin-left: 6px; }
+
+/* practice */
+.practice-progress { font-size: 12.5px; color: #888; margin-bottom: 0.5rem; }
+.practice-sentence-src { font-size: 13px; color: #aaa; margin-bottom: 0.6rem; }
+.pchunk { border: 2px solid #ddd; border-radius: 8px; padding: 0.4rem 0.65rem; font-size: 15px; font-weight: 500; cursor: pointer; background: #fafaf8; color: #333; position: relative; }
+.pchunk.selected { border-color: #185FA5; box-shadow: 0 0 0 2px #d6e6f7; }
+.pchunk .assigned-tag { position: absolute; top: -10px; right: -6px; font-size: 10px; font-weight: 800; border-radius: 999px; padding: 0px 5px; }
+.pchunk.graded-correct { border-color: #1e8449; }
+.pchunk.graded-wrong { border-color: #c0392b; }
+.mark { font-size: 13px; font-weight: 800; margin-left: 4px; }
+.mark.ok { color: #1e8449; }
+.mark.no { color: #c0392b; }
+
+.tag-picker { display: flex; gap: 8px; margin: 1rem 0; flex-wrap: wrap; }
+.tag-btn { border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-size: 14px; font-weight: 700; cursor: pointer; }
+.tag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.tag-btn-S { background: #eaf1fb; color: #185FA5; }
+.tag-btn-V { background: #fdecec; color: #c0392b; }
+.tag-btn-O { background: #eaf7ee; color: #1e8449; }
+.tag-btn-C { background: #f3ecfb; color: #7d3c98; }
+.tag-btn-M { background: #fdf3e3; color: #b9770e; }
+.tag-btn:hover:not(:disabled) { filter: brightness(0.95); }
+
+.result-box { margin-top: 1rem; padding: 0.85rem 1rem; border-radius: 10px; background: #f7faf7; border: 1px solid #dceedd; font-size: 14px; }
+.result-box.bad { background: #fdf5f5; border-color: #f2d6d6; }
+.wrong-list { font-size: 12.5px; color: #666; margin-top: 6px; line-height: 1.8; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.stat-cell { background: #fafaf8; border: 1px solid #eee; border-radius: 10px; padding: 0.6rem 0.75rem; text-align: center; }
+.stat-cell .num { font-size: 17px; font-weight: 700; color: #185FA5; }
+.stat-cell .lbl { font-size: 11px; color: #999; margin-top: 2px; }
+
+.custom-chunk-preview { display: flex; gap: 6px; flex-wrap: wrap; margin: 0.5rem 0; }
+.empty-note { color: #bbb; font-size: 12.5px; }
+@media (max-width: 560px) {
+  .row2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🧩 영어 문장 끊어읽기 연습</h1>
+  <p class="subtitle">문장을 주어(S) · 동사(V) · 목적어(O) · 보어(C) · 수식어(M) 덩어리로 나누어 보고, 직접 표시하며 연습해요</p>
+
+  <div class="level-row" id="levelRow"></div>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="study">📖 학습</button>
+    <button class="tab-btn" data-tab="practice">✍️ 연습 문제</button>
+    <button class="tab-btn" data-tab="add">➕ 문장 추가</button>
+    <button class="tab-btn" data-tab="stats">📊 학습 현황</button>
+  </nav>
+
+  <!-- 학습 탭 -->
+  <section id="tab-study" class="tab-panel active">
+    <div class="card">
+      <h2 id="studyLevelTitle">학습</h2>
+      <div class="legend" id="legendStudy"></div>
+      <div id="studyList"></div>
+    </div>
+  </section>
+
+  <!-- 연습 탭 -->
+  <section id="tab-practice" class="tab-panel">
+    <div class="card">
+      <h2>청크 분석 연습</h2>
+      <div class="legend" id="legendPractice"></div>
+      <div class="practice-progress" id="practiceProgress"></div>
+      <div id="practiceArea"></div>
+    </div>
+  </section>
+
+  <!-- 문장 추가 탭 -->
+  <section id="tab-add" class="tab-panel">
+    <div class="card">
+      <h2>내 문장 추가하기</h2>
+      <p class="hint">
+        문장을 원하는 청크 단위로 <code>/</code> 로 구분해서 입력하면, 각 청크에 태그(S/V/O/C/M)를 지정할 수 있어요.<br>
+        예: <code>She / gave / me / a nice present.</code>
+      </p>
+      <div class="field">
+        <label>난이도</label>
+        <select id="addLevel"></select>
+      </div>
+      <div class="field">
+        <label>문법 포인트 (선택)</label>
+        <input type="text" id="addGrammar" placeholder="예: 3형식 문장">
+      </div>
+      <div class="field">
+        <label>청크 구분 입력 (/ 로 구분)</label>
+        <textarea id="addChunksRaw" placeholder="예: She / gave / me / a nice present."></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="addParseBtn">청크 나누기</button>
+      </div>
+      <div id="addChunkTagArea"></div>
+      <div class="field" style="margin-top:0.75rem;">
+        <label>한글 해석 (선택)</label>
+        <input type="text" id="addTranslation" placeholder="예: 그녀는 나에게 멋진 선물을 주었다.">
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="addSaveBtn">이 문장 저장하기</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>내가 추가한 문장</h2>
+      <div id="customList"></div>
+    </div>
+  </section>
+
+  <!-- 학습 현황 탭 -->
+  <section id="tab-stats" class="tab-panel">
+    <div class="card">
+      <h2>난이도별 학습 현황</h2>
+      <div id="statsWrap"></div>
+      <div class="btn-row" style="margin-top:1rem;">
+        <button class="btn danger" id="resetStatsBtn">🗑️ 기록 초기화</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ================= data ================= */
+const LEVELS = ['중1', '중2', '중3', '고1', '고2', '고3'];
+const TAGS = ['S', 'V', 'O', 'C', 'M'];
+const TAG_NAMES = { S: '주어', V: '동사', O: '목적어', C: '보어', M: '수식어' };
+
+function c(t, g) { return { t, g }; }
+
+const SENTENCES = [
+  // ---------------- 중1 ----------------
+  { id:'m1-1', level:'중1', text:'I am a student.', grammar:'2형식 (be동사+보어)', translation:'나는 학생이다.',
+    chunks:[c('I','S'),c('am','V'),c('a student.','C')] },
+  { id:'m1-2', level:'중1', text:'She likes cats.', grammar:'3형식', translation:'그녀는 고양이를 좋아한다.',
+    chunks:[c('She','S'),c('likes','V'),c('cats.','O')] },
+  { id:'m1-3', level:'중1', text:'We play soccer after school.', grammar:'3형식 + 시간 수식어', translation:'우리는 방과 후에 축구를 한다.',
+    chunks:[c('We','S'),c('play','V'),c('soccer','O'),c('after school.','M')] },
+  { id:'m1-4', level:'중1', text:'The weather is nice today.', grammar:'2형식 + 시간 부사', translation:'오늘 날씨가 좋다.',
+    chunks:[c('The weather','S'),c('is','V'),c('nice','C'),c('today.','M')] },
+  { id:'m1-5', level:'중1', text:'He runs fast every morning.', grammar:'1형식 + 부사 수식어', translation:'그는 매일 아침 빠르게 달린다.',
+    chunks:[c('He','S'),c('runs','V'),c('fast','M'),c('every morning.','M')] },
+  { id:'m1-6', level:'중1', text:'My brother is very tall.', grammar:'2형식', translation:'내 형[남동생]은 키가 매우 크다.',
+    chunks:[c('My brother','S'),c('is','V'),c('very tall.','C')] },
+  { id:'m1-7', level:'중1', text:'They watch TV in the evening.', grammar:'3형식 + 장소/시간 수식어', translation:'그들은 저녁에 TV를 본다.',
+    chunks:[c('They','S'),c('watch','V'),c('TV','O'),c('in the evening.','M')] },
+  { id:'m1-8', level:'중1', text:'I go to school by bus.', grammar:'1형식 + 전치사구 수식어', translation:'나는 버스를 타고 학교에 간다.',
+    chunks:[c('I','S'),c('go','V'),c('to school','M'),c('by bus.','M')] },
+  { id:'m1-9', level:'중1', text:'There are many books on the desk.', grammar:'there is/are 구문', translation:'책상 위에 책이 많이 있다.',
+    note:'There는 뜻이 없는 유도부사예요. 진짜 주어는 그 뒤에 나오는 many books예요.',
+    chunks:[c('There','M'),c('are','V'),c('many books','S'),c('on the desk.','M')] },
+  { id:'m1-10', level:'중1', text:'She gave her friend a nice present.', grammar:'4형식 (수여동사)', translation:'그녀는 친구에게 멋진 선물을 주었다.',
+    note:'수여동사 문장은 목적어가 두 개예요. (간접목적어: her friend, 직접목적어: a nice present)',
+    chunks:[c('She','S'),c('gave','V'),c('her friend','O'),c('a nice present.','O')] },
+
+  // ---------------- 중2 ----------------
+  { id:'m2-1', level:'중2', text:'I want to travel abroad.', grammar:'to부정사 (명사적 용법·목적어)', translation:'나는 해외로 여행하고 싶다.',
+    chunks:[c('I','S'),c('want','V'),c('to travel abroad.','O')] },
+  { id:'m2-2', level:'중2', text:'Learning English is fun.', grammar:'동명사 주어', translation:'영어를 배우는 것은 재미있다.',
+    chunks:[c('Learning English','S'),c('is','V'),c('fun.','C')] },
+  { id:'m2-3', level:'중2', text:'She can speak three languages.', grammar:'조동사 can', translation:'그녀는 세 개 언어를 말할 수 있다.',
+    chunks:[c('She','S'),c('can speak','V'),c('three languages.','O')] },
+  { id:'m2-4', level:'중2', text:'He must finish his homework before dinner.', grammar:'조동사 must(의무)', translation:'그는 저녁 식사 전에 숙제를 끝내야 한다.',
+    chunks:[c('He','S'),c('must finish','V'),c('his homework','O'),c('before dinner.','M')] },
+  { id:'m2-5', level:'중2', text:'My mother makes me happy.', grammar:'5형식 (목적격보어)', translation:'우리 엄마는 나를 행복하게 만든다.',
+    chunks:[c('My mother','S'),c('makes','V'),c('me','O'),c('happy.','C')] },
+  { id:'m2-6', level:'중2', text:'This is the tallest building in the city.', grammar:'최상급', translation:'이것은 이 도시에서 가장 높은 건물이다.',
+    chunks:[c('This','S'),c('is','V'),c('the tallest building','C'),c('in the city.','M')] },
+  { id:'m2-7', level:'중2', text:'If it rains tomorrow, we will stay home.', grammar:'조건 부사절(if)', translation:'만약 내일 비가 오면, 우리는 집에 있을 것이다.',
+    note:'If로 시작하는 부분은 그 자체로 주어+동사를 가진 절이지만, 문장 전체에서는 조건을 나타내는 수식어(M) 역할을 해요.',
+    chunks:[c('If it rains tomorrow,','M'),c('we','S'),c('will stay','V'),c('home.','M')] },
+  { id:'m2-8', level:'중2', text:'Because he was tired, he went to bed early.', grammar:'이유 부사절(because)', translation:'그는 피곤했기 때문에 일찍 잠자리에 들었다.',
+    chunks:[c('Because he was tired,','M'),c('he','S'),c('went','V'),c('to bed','M'),c('early.','M')] },
+  { id:'m2-9', level:'중2', text:'I decided to study math harder.', grammar:'to부정사 목적어', translation:'나는 수학을 더 열심히 공부하기로 결심했다.',
+    chunks:[c('I','S'),c('decided','V'),c('to study math harder.','O')] },
+  { id:'m2-10', level:'중2', text:'Reading books makes me smart.', grammar:'동명사 주어 + 5형식', translation:'책을 읽는 것은 나를 똑똑하게 만든다.',
+    chunks:[c('Reading books','S'),c('makes','V'),c('me','O'),c('smart.','C')] },
+
+  // ---------------- 중3 ----------------
+  { id:'m3-1', level:'중3', text:'The book that I bought yesterday is amazing.', grammar:'목적격 관계대명사절', translation:'내가 어제 산 책은 놀랍다.',
+    note:'that I bought yesterday는 앞의 명사(the book)를 꾸미는 관계대명사절로, 주어 덩어리 안에 통째로 포함돼요.',
+    chunks:[c('The book that I bought yesterday','S'),c('is','V'),c('amazing.','C')] },
+  { id:'m3-2', level:'중3', text:'I have already finished my homework.', grammar:'현재완료(완료)', translation:'나는 이미 숙제를 끝냈다.',
+    chunks:[c('I','S'),c('have already finished','V'),c('my homework.','O')] },
+  { id:'m3-3', level:'중3', text:'This song was written by a famous singer.', grammar:'수동태', translation:'이 노래는 유명한 가수에 의해 쓰였다.',
+    chunks:[c('This song','S'),c('was written','V'),c('by a famous singer.','M')] },
+  { id:'m3-4', level:'중3', text:'She told me that she was busy.', grammar:'명사절(that) 직접목적어', translation:'그녀는 나에게 자신이 바쁘다고 말했다.',
+    chunks:[c('She','S'),c('told','V'),c('me','O'),c('that she was busy.','O')] },
+  { id:'m3-5', level:'중3', text:'I wonder where he lives.', grammar:'간접의문문(명사절 목적어)', translation:'나는 그가 어디에 사는지 궁금하다.',
+    chunks:[c('I','S'),c('wonder','V'),c('where he lives.','O')] },
+  { id:'m3-6', level:'중3', text:'The man who lives next door is a doctor.', grammar:'주격 관계대명사절', translation:'옆집에 사는 그 남자는 의사이다.',
+    chunks:[c('The man who lives next door','S'),c('is','V'),c('a doctor.','C')] },
+  { id:'m3-7', level:'중3', text:'English is spoken in many countries.', grammar:'수동태', translation:'영어는 많은 나라에서 사용된다.',
+    chunks:[c('English','S'),c('is spoken','V'),c('in many countries.','M')] },
+  { id:'m3-8', level:'중3', text:'I have never been to Japan.', grammar:'현재완료(경험)', translation:'나는 일본에 가본 적이 없다.',
+    chunks:[c('I','S'),c('have never been','V'),c('to Japan.','M')] },
+  { id:'m3-9', level:'중3', text:'As soon as I arrived, it started to rain.', grammar:'시간 접속사(as soon as)', translation:'내가 도착하자마자 비가 오기 시작했다.',
+    chunks:[c('As soon as I arrived,','M'),c('it','S'),c('started','V'),c('to rain.','O')] },
+  { id:'m3-10', level:'중3', text:'The movie that we watched last night was boring.', grammar:'목적격 관계대명사절', translation:'우리가 어젯밤에 본 영화는 지루했다.',
+    chunks:[c('The movie that we watched last night','S'),c('was','V'),c('boring.','C')] },
+
+  // ---------------- 고1 ----------------
+  { id:'h1-1', level:'고1', text:'It is important to exercise regularly.', grammar:'가주어 it / 진주어 to부정사', translation:'규칙적으로 운동하는 것은 중요하다.',
+    note:'It은 형식상의 가주어이고, 진짜 주어는 문장 뒤의 to부정사구(to exercise regularly)예요. 이 앱에서는 편의상 수식어(M)로 표시했어요.',
+    chunks:[c('It','S'),c('is','V'),c('important','C'),c('to exercise regularly.','M')] },
+  { id:'h1-2', level:'고1', text:'Walking down the street, I met an old friend.', grammar:'분사구문(동시동작)', translation:'길을 걷다가, 나는 오랜 친구를 만났다.',
+    chunks:[c('Walking down the street,','M'),c('I','S'),c('met','V'),c('an old friend.','O')] },
+  { id:'h1-3', level:'고1', text:'The novel, which was written in 1990, became a bestseller.', grammar:'계속적 용법의 관계대명사절', translation:'그 소설은, 1990년에 쓰였는데, 베스트셀러가 되었다.',
+    chunks:[c('The novel,','S'),c('which was written in 1990,','M'),c('became','V'),c('a bestseller.','C')] },
+  { id:'h1-4', level:'고1', text:'That is the reason why she quit her job.', grammar:'관계부사 why', translation:'그것이 그녀가 일을 그만둔 이유이다.',
+    chunks:[c('That','S'),c('is','V'),c('the reason why she quit her job.','C')] },
+  { id:'h1-5', level:'고1', text:'Having finished his work, he went home early.', grammar:'완료형 분사구문', translation:'일을 끝낸 후에, 그는 집에 일찍 갔다.',
+    chunks:[c('Having finished his work,','M'),c('he','S'),c('went','V'),c('home','M'),c('early.','M')] },
+  { id:'h1-6', level:'고1', text:'I found it difficult to solve the problem.', grammar:'가목적어 it / 진목적어 to부정사 (5형식)', translation:'나는 그 문제를 푸는 것이 어렵다는 것을 알았다.',
+    note:'it은 가목적어이고, 진짜 목적어는 뒤에 나오는 to solve the problem이에요.',
+    chunks:[c('I','S'),c('found','V'),c('it','O'),c('difficult','C'),c('to solve the problem.','M')] },
+  { id:'h1-7', level:'고1', text:'Despite the heavy rain, the game continued.', grammar:'전치사(despite) 수식어', translation:'폭우에도 불구하고, 경기는 계속되었다.',
+    chunks:[c('Despite the heavy rain,','M'),c('the game','S'),c('continued.','V')] },
+  { id:'h1-8', level:'고1', text:'Whoever wins the race will get a prize.', grammar:'복합관계대명사(whoever) 주어절', translation:'경주에서 이기는 사람은 누구든지 상을 받을 것이다.',
+    chunks:[c('Whoever wins the race','S'),c('will get','V'),c('a prize.','O')] },
+
+  // ---------------- 고2 ----------------
+  { id:'h2-1', level:'고2', text:'If I were you, I would accept the offer.', grammar:'가정법 과거', translation:'내가 너라면, 나는 그 제안을 받아들일 텐데.',
+    chunks:[c('If I were you,','M'),c('I','S'),c('would accept','V'),c('the offer.','O')] },
+  { id:'h2-2', level:'고2', text:'Had I known the truth, I would have told you.', grammar:'가정법 과거완료(if 생략·도치)', translation:'내가 그 사실을 알았더라면, 너에게 말했을 텐데.',
+    chunks:[c('Had I known the truth,','M'),c('I','S'),c('would have told','V'),c('you.','O')] },
+  { id:'h2-3', level:'고2', text:'Never have I seen such a beautiful sunset.', grammar:'부정어 도치(Never)', translation:'나는 이렇게 아름다운 노을을 본 적이 없다.',
+    note:'부정어(Never)가 문장 맨 앞에 오면서 주어와 동사의 순서가 바뀌는 도치 구문이에요.',
+    chunks:[c('Never','M'),c('have','V'),c('I','S'),c('seen','V'),c('such a beautiful sunset.','O')] },
+  { id:'h2-4', level:'고2', text:'The more you practice, the better you become.', grammar:'the 비교급 ~, the 비교급 ~', translation:'네가 연습을 더 많이 할수록, 너는 더 나아진다.',
+    chunks:[c('The more you practice,','M'),c('the better','C'),c('you','S'),c('become.','V')] },
+  { id:'h2-5', level:'고2', text:'What surprised me most was his sudden apology.', grammar:'명사절(what) 주어', translation:'나를 가장 놀라게 한 것은 그의 갑작스러운 사과였다.',
+    chunks:[c('What surprised me most','S'),c('was','V'),c('his sudden apology.','C')] },
+  { id:'h2-6', level:'고2', text:'It was not until he apologized that she forgave him.', grammar:'not until 강조구문', translation:'그가 사과하고 나서야 그녀는 그를 용서했다.',
+    chunks:[c('It was not until he apologized that','M'),c('she','S'),c('forgave','V'),c('him.','O')] },
+  { id:'h2-7', level:'고2', text:"Little did I know that he was lying.", grammar:'부정어(Little) 도치', translation:'나는 그가 거짓말을 하고 있다는 것을 전혀 몰랐다.',
+    chunks:[c('Little','M'),c('did','V'),c('I','S'),c('know','V'),c('that he was lying.','O')] },
+  { id:'h2-8', level:'고2', text:'Given the circumstances, I think we made the right choice.', grammar:'분사구문(Given) + 명사절 목적어', translation:'상황을 고려하면, 우리가 옳은 선택을 했다고 생각한다.',
+    chunks:[c('Given the circumstances,','M'),c('I','S'),c('think','V'),c('we made the right choice.','O')] },
+
+  // ---------------- 고3 ----------------
+  { id:'h3-1', level:'고3', text:'It is widely believed that regular exercise improves both physical and mental health.', grammar:'가주어 it / 진주어 that절', translation:'규칙적인 운동이 신체적, 정신적 건강을 모두 향상시킨다고 널리 믿어진다.',
+    note:'that절이 실제로는 진짜 주어 역할을 하는 가주어 it 구문이에요.',
+    chunks:[c('It','S'),c('is widely believed','V'),c('that regular exercise improves both physical and mental health.','M')] },
+  { id:'h3-2', level:'고3', text:'The extent to which technology has transformed our daily lives cannot be overstated.', grammar:'전치사+관계대명사(to which)절이 주어를 수식', translation:'기술이 우리의 일상생활을 변화시킨 정도는 아무리 강조해도 지나치지 않다.',
+    chunks:[c('The extent to which technology has transformed our daily lives','S'),c('cannot be overstated.','V')] },
+  { id:'h3-3', level:'고3', text:'Having been exposed to various cultures, she developed a more open mindset.', grammar:'완료 수동 분사구문', translation:'다양한 문화에 노출된 후, 그녀는 더 개방적인 사고방식을 갖게 되었다.',
+    chunks:[c('Having been exposed to various cultures,','M'),c('she','S'),c('developed','V'),c('a more open mindset.','O')] },
+  { id:'h3-4', level:'고3', text:'Whether we succeed or fail depends largely on our attitude.', grammar:'명사절(whether) 주어', translation:'우리가 성공하느냐 실패하느냐는 대체로 우리의 태도에 달려 있다.',
+    chunks:[c('Whether we succeed or fail','S'),c('depends','V'),c('largely','M'),c('on our attitude.','M')] },
+  { id:'h3-5', level:'고3', text:"So absorbed was he in the novel that he didn't notice the time.", grammar:'보어 도치(So+형용사)', translation:'그는 소설에 너무 몰두해서 시간이 가는 줄도 몰랐다.',
+    note:'원래 문장은 He was so absorbed in the novel that ~ 인데, So absorbed가 강조를 위해 앞으로 나가면서 주어와 동사가 도치되었어요.',
+    chunks:[c('So absorbed','C'),c('was','V'),c('he','S'),c('in the novel','M'),c("that he didn't notice the time.",'M')] },
+  { id:'h3-6', level:'고3', text:'What makes this discovery so remarkable is its potential to revolutionize medicine.', grammar:'명사절(what) 주어', translation:'이 발견을 그토록 놀랍게 만드는 것은 의학을 혁신할 잠재력이다.',
+    chunks:[c('What makes this discovery so remarkable','S'),c('is','V'),c('its potential to revolutionize medicine.','C')] },
+  { id:'h3-7', level:'고3', text:'Only when we accept our failures can we truly grow.', grammar:'부정어구(only when~) 도치', translation:'우리가 실패를 받아들일 때만 우리는 진정으로 성장할 수 있다.',
+    chunks:[c('Only when we accept our failures','M'),c('can','V'),c('we','S'),c('truly','M'),c('grow.','V')] },
+  { id:'h3-8', level:'고3', text:'The report suggests that companies investing in employee well-being tend to outperform their competitors.', grammar:'that절 목적어(명사절)', translation:'그 보고서는 직원 복지에 투자하는 기업들이 경쟁사보다 더 나은 성과를 내는 경향이 있다고 시사한다.',
+    chunks:[c('The report','S'),c('suggests','V'),c('that companies investing in employee well-being tend to outperform their competitors.','O')] },
+];
+
+/* ================= storage ================= */
+const CUSTOM_KEY = 'chunkAppCustomSentences';
+const STATS_KEY = 'chunkAppStats';
+const LEVEL_KEY = 'chunkAppCurrentLevel';
+
+function loadCustom() {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_KEY)) || []; } catch (e) { return []; }
+}
+function saveCustom(list) { localStorage.setItem(CUSTOM_KEY, JSON.stringify(list)); }
+
+function loadStats() {
+  try { return JSON.parse(localStorage.getItem(STATS_KEY)) || {}; } catch (e) { return {}; }
+}
+function saveStats(s) { localStorage.setItem(STATS_KEY, JSON.stringify(s)); }
+function getLevelStats(level) {
+  const s = loadStats();
+  return s[level] || { attempted: 0, correctSentences: 0, chunkTotal: 0, chunkCorrect: 0 };
+}
+function recordAttempt(level, chunkTotal, chunkCorrect) {
+  const s = loadStats();
+  const cur = s[level] || { attempted: 0, correctSentences: 0, chunkTotal: 0, chunkCorrect: 0 };
+  cur.attempted += 1;
+  if (chunkCorrect === chunkTotal) cur.correctSentences += 1;
+  cur.chunkTotal += chunkTotal;
+  cur.chunkCorrect += chunkCorrect;
+  s[level] = cur;
+  saveStats(s);
+}
+
+let customSentences = loadCustom();
+
+function sentencesForLevel(level) {
+  return SENTENCES.filter(s => s.level === level).concat(customSentences.filter(s => s.level === level));
+}
+
+/* ================= level state ================= */
+let currentLevel = localStorage.getItem(LEVEL_KEY) || LEVELS[0];
+
+function renderLevelRow() {
+  const wrap = document.getElementById('levelRow');
+  wrap.innerHTML = LEVELS.map(lv => {
+    const total = sentencesForLevel(lv).length;
+    const st = getLevelStats(lv);
+    return `<button class="level-pill ${lv === currentLevel ? 'active' : ''}" data-level="${lv}">
+      ${lv} <span class="prog">${st.attempted}/${total}</span>
+    </button>`;
+  }).join('');
+  wrap.querySelectorAll('.level-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentLevel = btn.dataset.level;
+      localStorage.setItem(LEVEL_KEY, currentLevel);
+      practiceState = null;
+      renderAll();
+    });
+  });
+}
+
+/* ================= legend ================= */
+function legendHtml() {
+  return TAGS.map(t => `<span class="legend-item tag-${t}">${t} · ${TAG_NAMES[t]}</span>`).join('');
+}
+
+/* ================= study tab ================= */
+let openSentenceId = null;
+
+function renderStudyTab() {
+  document.getElementById('studyLevelTitle').textContent = currentLevel + ' 학습';
+  document.getElementById('legendStudy').innerHTML = legendHtml();
+  const list = sentencesForLevel(currentLevel);
+  const wrap = document.getElementById('studyList');
+  if (list.length === 0) {
+    wrap.innerHTML = '<p class="empty-note">이 난이도에는 아직 문장이 없어요.</p>';
+    return;
+  }
+  wrap.innerHTML = list.map(s => {
+    const isOpen = openSentenceId === s.id;
+    return `<div class="sentence-item ${isOpen ? 'open' : ''}" data-id="${s.id}">
+      <div class="sent-text">${escapeHtml(s.text)}${s.custom ? '<span class="custom-badge">내 문장</span>' : ''}</div>
+      <div class="sent-summary">${s.grammar ? escapeHtml(s.grammar) : ''}</div>
+      ${isOpen ? renderChunkDisplay(s) : ''}
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('.sentence-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      openSentenceId = openSentenceId === id ? null : id;
+      renderStudyTab();
+    });
+  });
+}
+
+function renderChunkDisplay(s) {
+  const chunksHtml = s.chunks.map(ch => `
+    <div class="chunk-box">
+      <span class="chunk-word tag-${ch.g}">${escapeHtml(ch.t)}</span>
+      <span class="chunk-label tag-${ch.g}">${ch.g}</span>
+    </div>`).join('');
+  return `
+    <div class="chunk-line">${chunksHtml}</div>
+    ${s.translation ? `<div class="sent-meta">🇰🇷 ${escapeHtml(s.translation)}</div>` : ''}
+    ${s.note ? `<div class="sent-note">💡 ${escapeHtml(s.note)}</div>` : ''}
+  `;
+}
+
+/* ================= practice tab ================= */
+let practiceState = null; // {sentence, order:[indices], assigned:{idx:tag}, graded:bool, selectedIdx}
+let practiceOrderPerLevel = {}; // level -> shuffled list of sentence ids, and cursor
+
+function getPracticeQueue(level) {
+  if (!practiceOrderPerLevel[level]) {
+    const ids = shuffle(sentencesForLevel(level).map(s => s.id));
+    practiceOrderPerLevel[level] = { ids, cursor: 0 };
+  }
+  return practiceOrderPerLevel[level];
+}
+
+function startPractice(level, sentenceId) {
+  const s = sentencesForLevel(level).find(x => x.id === sentenceId);
+  if (!s) return;
+  practiceState = { sentence: s, assigned: {}, graded: false, selectedIdx: null };
+}
+
+function nextPracticeSentence() {
+  const q = getPracticeQueue(currentLevel);
+  const list = sentencesForLevel(currentLevel);
+  if (list.length === 0) { practiceState = null; return; }
+  q.cursor = (q.cursor + 1) % q.ids.length;
+  startPractice(currentLevel, q.ids[q.cursor]);
+}
+
+function renderPracticeTab() {
+  document.getElementById('legendPractice').innerHTML = legendHtml();
+  const list = sentencesForLevel(currentLevel);
+  const st = getLevelStats(currentLevel);
+  document.getElementById('practiceProgress').textContent =
+    `${currentLevel} · 지금까지 ${st.attempted}문장 연습, 문장 완벽정답 ${st.correctSentences}개 / 청크 정확도 ${st.chunkTotal ? Math.round(st.chunkCorrect / st.chunkTotal * 100) : 0}%`;
+
+  const area = document.getElementById('practiceArea');
+  if (list.length === 0) {
+    area.innerHTML = '<p class="empty-note">이 난이도에는 아직 연습할 문장이 없어요.</p>';
+    return;
+  }
+  if (!practiceState || practiceState.sentence.level !== currentLevel) {
+    const q = getPracticeQueue(currentLevel);
+    startPractice(currentLevel, q.ids[q.cursor % q.ids.length]);
+  }
+
+  const s = practiceState.sentence;
+  const chunksHtml = s.chunks.map((ch, i) => {
+    const assignedTag = practiceState.assigned[i];
+    let cls = 'pchunk';
+    if (practiceState.selectedIdx === i) cls += ' selected';
+    if (practiceState.graded) {
+      cls += (assignedTag === ch.g) ? ' graded-correct' : ' graded-wrong';
+    }
+    const badge = assignedTag ? `<span class="assigned-tag tag-${assignedTag}">${assignedTag}</span>` : '';
+    const wrongNote = (practiceState.graded && assignedTag !== ch.g)
+      ? `<span class="mark no">정답: ${ch.g}</span>` : (practiceState.graded ? `<span class="mark ok">✓</span>` : '');
+    return `<span class="pchunk-wrap" style="display:inline-flex;align-items:center;gap:4px;">
+      <span class="${cls}" data-idx="${i}">${escapeHtml(ch.t)}${badge}</span>${wrongNote}
+    </span>`;
+  }).join(' ');
+
+  const allAssigned = s.chunks.every((_, i) => practiceState.assigned[i]);
+
+  area.innerHTML = `
+    <div class="practice-sentence-src">문장을 하나씩 클릭한 뒤, 아래 태그 버튼으로 역할을 지정해보세요.</div>
+    <div class="chunk-line" id="pchunkLine">${chunksHtml}</div>
+    <div class="tag-picker" id="tagPicker">
+      ${TAGS.map(t => `<button class="tag-btn tag-btn-${t}" data-tag="${t}" ${practiceState.graded ? 'disabled' : ''}>${t} (${TAG_NAMES[t]})</button>`).join('')}
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="gradeBtn" ${(!allAssigned || practiceState.graded) ? 'disabled' : ''}>채점하기</button>
+      <button class="btn" id="resetBtn" ${practiceState.graded ? 'disabled' : ''}>다시 선택</button>
+      <button class="btn" id="nextBtn">다음 문장 →</button>
+    </div>
+    <div id="resultBox"></div>
+  `;
+
+  area.querySelectorAll('.pchunk').forEach(el => {
+    el.addEventListener('click', () => {
+      if (practiceState.graded) return;
+      practiceState.selectedIdx = Number(el.dataset.idx);
+      renderPracticeTab();
+    });
+  });
+  area.querySelectorAll('.tag-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (practiceState.selectedIdx === null || practiceState.graded) return;
+      practiceState.assigned[practiceState.selectedIdx] = btn.dataset.tag;
+      practiceState.selectedIdx = null;
+      renderPracticeTab();
+    });
+  });
+  const gradeBtn = document.getElementById('gradeBtn');
+  if (gradeBtn) gradeBtn.addEventListener('click', gradePractice);
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    practiceState.assigned = {};
+    practiceState.selectedIdx = null;
+    renderPracticeTab();
+  });
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    nextPracticeSentence();
+    renderPracticeTab();
+  });
+
+  if (practiceState.graded) renderResultBox();
+}
+
+function gradePractice() {
+  practiceState.graded = true;
+  const s = practiceState.sentence;
+  const total = s.chunks.length;
+  const correct = s.chunks.filter((ch, i) => practiceState.assigned[i] === ch.g).length;
+  recordAttempt(currentLevel, total, correct);
+  renderLevelRow();
+  renderPracticeTab();
+}
+
+function renderResultBox() {
+  const s = practiceState.sentence;
+  const total = s.chunks.length;
+  const correct = s.chunks.filter((ch, i) => practiceState.assigned[i] === ch.g).length;
+  const perfect = correct === total;
+  const box = document.getElementById('resultBox');
+  box.innerHTML = `
+    <div class="result-box ${perfect ? '' : 'bad'}">
+      <strong>${perfect ? '🎉 완벽해요!' : `${correct} / ${total} 개 정답`}</strong>
+      ${s.translation ? `<div class="sent-meta">🇰🇷 ${escapeHtml(s.translation)}</div>` : ''}
+      ${s.note ? `<div class="sent-note">💡 ${escapeHtml(s.note)}</div>` : ''}
+    </div>
+  `;
+}
+
+/* ================= add tab ================= */
+let addChunkDraft = [];
+
+function renderAddLevelSelect() {
+  const sel = document.getElementById('addLevel');
+  sel.innerHTML = LEVELS.map(lv => `<option value="${lv}" ${lv === currentLevel ? 'selected' : ''}>${lv}</option>`).join('');
+}
+
+document.getElementById('addParseBtn').addEventListener('click', () => {
+  const raw = document.getElementById('addChunksRaw').value;
+  const parts = raw.split('/').map(p => p.trim()).filter(Boolean);
+  if (parts.length === 0) { alert('청크를 하나 이상 입력해주세요.'); return; }
+  addChunkDraft = parts.map(p => ({ t: p, g: 'S' }));
+  renderAddChunkTagArea();
+});
+
+function renderAddChunkTagArea() {
+  const wrap = document.getElementById('addChunkTagArea');
+  if (addChunkDraft.length === 0) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `
+    <h3>각 청크의 역할을 선택하세요</h3>
+    <div class="custom-chunk-preview">
+      ${addChunkDraft.map((d, i) => `
+        <span class="chunk-box">
+          <span class="chunk-word tag-${d.g}">${escapeHtml(d.t)}</span>
+          <select data-idx="${i}" class="chunkTagSelect" style="font-size:11px; padding:2px 4px;">
+            ${TAGS.map(t => `<option value="${t}" ${t === d.g ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+        </span>
+      `).join('')}
+    </div>
+  `;
+  wrap.querySelectorAll('.chunkTagSelect').forEach(sel => {
+    sel.addEventListener('change', () => {
+      addChunkDraft[Number(sel.dataset.idx)].g = sel.value;
+      renderAddChunkTagArea();
+    });
+  });
+}
+
+document.getElementById('addSaveBtn').addEventListener('click', () => {
+  if (addChunkDraft.length === 0) { alert('먼저 "청크 나누기" 버튼으로 문장을 나눠주세요.'); return; }
+  const level = document.getElementById('addLevel').value;
+  const grammar = document.getElementById('addGrammar').value.trim();
+  const translation = document.getElementById('addTranslation').value.trim();
+  const text = addChunkDraft.map(d => d.t).join(' ');
+  const sentence = {
+    id: 'custom_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    level, text, grammar, translation,
+    chunks: addChunkDraft.map(d => ({ t: d.t, g: d.g })),
+    custom: true
+  };
+  customSentences.push(sentence);
+  saveCustom(customSentences);
+  addChunkDraft = [];
+  document.getElementById('addChunksRaw').value = '';
+  document.getElementById('addChunkTagArea').innerHTML = '';
+  document.getElementById('addGrammar').value = '';
+  document.getElementById('addTranslation').value = '';
+  alert('문장이 저장되었어요!');
+  practiceOrderPerLevel[level] = null;
+  renderAll();
+});
+
+function renderCustomList() {
+  const wrap = document.getElementById('customList');
+  if (customSentences.length === 0) {
+    wrap.innerHTML = '<p class="empty-note">아직 추가한 문장이 없어요.</p>';
+    return;
+  }
+  wrap.innerHTML = customSentences.map(s => `
+    <div class="sentence-item">
+      <div class="sent-text">[${s.level}] ${escapeHtml(s.text)}</div>
+      <div class="sent-summary">${s.grammar ? escapeHtml(s.grammar) : ''}</div>
+      <div class="btn-row">
+        <button class="btn small danger" data-id="${s.id}">삭제</button>
+      </div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('button[data-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('이 문장을 삭제할까요?')) return;
+      customSentences = customSentences.filter(s => s.id !== btn.dataset.id);
+      saveCustom(customSentences);
+      practiceOrderPerLevel = {};
+      renderAll();
+    });
+  });
+}
+
+/* ================= stats tab ================= */
+function renderStatsTab() {
+  const wrap = document.getElementById('statsWrap');
+  wrap.innerHTML = LEVELS.map(lv => {
+    const st = getLevelStats(lv);
+    const total = sentencesForLevel(lv).length;
+    const acc = st.chunkTotal ? Math.round(st.chunkCorrect / st.chunkTotal * 100) : 0;
+    return `
+      <h3>${lv}</h3>
+      <div class="stats-grid">
+        <div class="stat-cell"><div class="num">${total}</div><div class="lbl">전체 문장</div></div>
+        <div class="stat-cell"><div class="num">${st.attempted}</div><div class="lbl">연습 횟수</div></div>
+        <div class="stat-cell"><div class="num">${st.correctSentences}</div><div class="lbl">완벽 정답</div></div>
+        <div class="stat-cell"><div class="num">${acc}%</div><div class="lbl">청크 정확도</div></div>
+      </div>
+    `;
+  }).join('');
+}
+
+document.getElementById('resetStatsBtn').addEventListener('click', () => {
+  if (!confirm('모든 학습 기록을 초기화할까요? 되돌릴 수 없습니다.')) return;
+  localStorage.removeItem(STATS_KEY);
+  renderAll();
+});
+
+/* ================= tabs ================= */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    renderAll();
+  });
+});
+
+/* ================= utils ================= */
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+/* ================= init ================= */
+function renderAll() {
+  renderLevelRow();
+  renderStudyTab();
+  renderPracticeTab();
+  renderAddLevelSelect();
+  renderCustomList();
+  renderStatsTab();
+}
+renderAll();
+</script>
+</body>
+</html>
