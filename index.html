@@ -171,6 +171,20 @@ textarea:disabled { opacity: 0.6; }
 .chunk-sub-box { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .chunk-word.sub { font-size: 12px; padding: 0.25rem 0.45rem; }
 .chunk-label.sub { font-size: 9px; padding: 0px 5px; }
+.sub-quiz-panel { margin-top: 7px; padding-top: 7px; border-top: 1px dashed var(--border); width: 100%; max-width: 320px; text-align: center; }
+.sub-quiz-hint { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+.sub-pchunk-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 8px; }
+.sub-pchunk-wrap { display: inline-flex; align-items: center; gap: 3px; }
+.sub-pchunk { border: 2px solid var(--border); border-radius: 7px; padding: 0.3rem 0.5rem; font-size: 12.5px; font-weight: 500; cursor: pointer; background: var(--surface); color: var(--text); position: relative; }
+.sub-pchunk.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.sub-pchunk .assigned-tag { position: absolute; top: -9px; right: -5px; font-size: 9px; font-weight: 800; border-radius: 999px; padding: 0px 4px; }
+.sub-pchunk.graded-correct { border-color: var(--ok); }
+.sub-pchunk.graded-wrong { border-color: var(--danger); }
+.sub-tag-picker { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-bottom: 6px; }
+.sub-tag-btn { border: none; border-radius: 7px; padding: 0.3rem 0.6rem; font-size: 11.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.sub-tag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.sub-tag-btn:hover:not(:disabled) { filter: brightness(1.08); }
+.sub-result-note { font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-top: 4px; }
 .sent-meta { font-size: 12.5px; color: var(--text-muted); margin-top: 0.4rem; }
 .sent-grammar { display: inline-block; background: var(--border-soft); color: var(--text); border-radius: 6px; padding: 1px 8px; font-size: 11.5px; margin-right: 6px; }
 .sent-note { font-size: 12px; color: var(--tag-m-fg); background: var(--tag-m-bg); border: 1px solid var(--tag-m-bd); border-radius: 8px; padding: 0.5rem 0.7rem; margin-top: 0.5rem; line-height: 1.55; }
@@ -2049,7 +2063,50 @@ function startPractice(level, sentenceId) {
     sentence: s, assigned: {}, graded: false, selectedIdx: null, userTranslation: '',
     phase: practiceMode === 'split' ? 'boundary' : 'tag',
     userBreaks: new Set(), boundaryChecked: false,
+    subPractice: {}, // { [chunkIndex]: { assigned:{subIdx:tag}, selectedSubIdx, graded } } — the 세부분석 mini-quiz
   };
+}
+
+function getSubPractice(chunkIdx) {
+  if (!practiceState.subPractice) practiceState.subPractice = {};
+  if (!practiceState.subPractice[chunkIdx]) {
+    practiceState.subPractice[chunkIdx] = { assigned: {}, selectedSubIdx: null, graded: false };
+  }
+  return practiceState.subPractice[chunkIdx];
+}
+
+function renderSubQuizHtml(ch, chunkIdx) {
+  const sp = getSubPractice(chunkIdx);
+  const subChunksHtml = ch.sub.map((sc, j) => {
+    const assignedSubTag = sp.assigned[j];
+    let subCls = 'sub-pchunk';
+    if (sp.selectedSubIdx === j) subCls += ' selected';
+    if (sp.graded) subCls += (assignedSubTag === sc.g) ? ' graded-correct' : ' graded-wrong';
+    const subBadge = assignedSubTag ? `<span class="assigned-tag tag-${assignedSubTag}">${assignedSubTag}</span>` : '';
+    const subMark = sp.graded
+      ? (assignedSubTag === sc.g ? '<span class="mark ok">✓</span>' : `<span class="mark no">정답: ${sc.g}</span>`)
+      : '';
+    return `<span class="sub-pchunk-wrap">
+      <span class="${subCls}" data-chunk="${chunkIdx}" data-sub="${j}">${escapeHtml(sc.t)}${subBadge}</span>${subMark}
+    </span>`;
+  }).join(' ');
+  const allSubAssigned = ch.sub.every((_, j) => sp.assigned[j]);
+  const subCorrectCount = ch.sub.filter((sc, j) => sp.assigned[j] === sc.g).length;
+
+  return `
+    <div class="sub-quiz-panel">
+      <div class="sub-quiz-hint">${sp.graded ? '' : '각 조각을 클릭한 뒤, 아래 태그로 역할을 지정해보세요.'}</div>
+      <div class="sub-pchunk-row">${subChunksHtml}</div>
+      <div class="sub-tag-picker">
+        ${TAGS.map(t => `<button class="sub-tag-btn tag-btn-${t}" data-chunk="${chunkIdx}" data-tag="${t}" ${sp.graded ? 'disabled' : ''}>${t}</button>`).join('')}
+      </div>
+      <div class="btn-row" style="justify-content:center;">
+        ${sp.graded
+          ? `<button class="btn small sub-retry-btn" data-chunk="${chunkIdx}">↺ 다시 풀기</button>`
+          : `<button class="btn small primary sub-grade-btn" data-chunk="${chunkIdx}" ${allSubAssigned ? '' : 'disabled'}>세부 채점하기</button>`}
+      </div>
+      ${sp.graded ? `<div class="sub-result-note">${subCorrectCount} / ${ch.sub.length}개 정답</div>` : ''}
+    </div>`;
 }
 
 /* 문장을 단어로 쪼개고, 정답 청크 경계에 해당하는 "간격 인덱스" 집합을 계산 */
@@ -2199,21 +2256,14 @@ function renderPracticeTab() {
     const wrongNote = (practiceState.graded && assignedTag !== ch.g)
       ? `<span class="mark no">정답: ${ch.g}</span>` : (practiceState.graded ? `<span class="mark ok">✓</span>` : '');
 
-    // after grading, let students drill into clause/modifier chunks for review — same as the Study tab
+    // after grading, let students actually practice the clause/modifier breakdown themselves
     const hasSub = Array.isArray(ch.sub) && ch.sub.length > 0;
     const subKey = s.id + '__' + i;
     const showDetailBtn = practiceState.graded && hasSub;
     const subOpen = showDetailBtn && openSubChunks.has(subKey);
     const detailBtnHtml = showDetailBtn
       ? `<button type="button" class="chunk-detail-btn" data-subkey="${subKey}">${subOpen ? '▲ 닫기' : '🔍 세부분석'}</button>` : '';
-    const subHtml = subOpen ? `
-      <div class="chunk-sub-line">
-        ${ch.sub.map(sc => `
-          <div class="chunk-sub-box">
-            <span class="chunk-word sub tag-${sc.g}">${escapeHtml(sc.t)}</span>
-            <span class="chunk-label sub tag-${sc.g}">${sc.g}</span>
-          </div>`).join('')}
-      </div>` : '';
+    const subHtml = subOpen ? renderSubQuizHtml(ch, i) : '';
 
     return `<span class="pchunk-wrap" style="display:inline-flex;flex-direction:column;align-items:center;gap:4px;">
       <span style="display:inline-flex;align-items:center;gap:4px;">
@@ -2267,6 +2317,42 @@ function renderPracticeTab() {
       e.stopPropagation();
       const key = btn.dataset.subkey;
       if (openSubChunks.has(key)) openSubChunks.delete(key); else openSubChunks.add(key);
+      renderPracticeTab();
+    });
+  });
+  area.querySelectorAll('.sub-pchunk').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const ci = Number(el.dataset.chunk), si = Number(el.dataset.sub);
+      const sp = getSubPractice(ci);
+      if (sp.graded) return;
+      sp.selectedSubIdx = si;
+      renderPracticeTab();
+    });
+  });
+  area.querySelectorAll('.sub-tag-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const ci = Number(btn.dataset.chunk);
+      const sp = getSubPractice(ci);
+      if (sp.graded || sp.selectedSubIdx === null) return;
+      sp.assigned[sp.selectedSubIdx] = btn.dataset.tag;
+      sp.selectedSubIdx = null;
+      renderPracticeTab();
+    });
+  });
+  area.querySelectorAll('.sub-grade-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      getSubPractice(Number(btn.dataset.chunk)).graded = true;
+      renderPracticeTab();
+    });
+  });
+  area.querySelectorAll('.sub-retry-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const ci = Number(btn.dataset.chunk);
+      practiceState.subPractice[ci] = { assigned: {}, selectedSubIdx: null, graded: false };
       renderPracticeTab();
     });
   });
