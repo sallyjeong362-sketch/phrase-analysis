@@ -269,6 +269,9 @@ textarea:disabled { opacity: 0.6; }
 .ws-chunk-blank { width: 100%; min-width: 30px; border-bottom: 1px solid #999; height: 1.2em; margin-top: 3px; }
 .ws-translate-line { margin-top: 8px; border-bottom: 1px solid #bbb; height: 1.6em; }
 .ws-translate-caption { font-size: 11px; color: #999; margin-top: 10px; }
+.ws-plain-sentence { font-size: 15.5px; font-weight: 600; color: #1a1a18; line-height: 1.7; }
+.ws-divide-line { margin-top: 12px; border-bottom: 1px solid #999; height: 1.7em; }
+.ws-divide-caption { font-size: 11px; color: #999; margin-top: 4px; }
 .ws-study-trans { font-size: 13px; color: #175fa0; margin-top: 4px; }
 .ws-study-grammar { display: inline-block; background: #f0f0ee; color: #555; border-radius: 6px; padding: 1px 8px; font-size: 11px; margin-top: 4px; }
 .ws-study-tags .ws-tag { font-weight: 700; padding: 1px 6px; border-radius: 5px; font-size: 12.5px; margin-right: 3px; }
@@ -427,10 +430,13 @@ textarea:disabled { opacity: 0.6; }
       <div class="field">
         <label>학습지 유형</label>
         <select id="printType">
-          <option value="chunk">청크 분석 학습지 (S/V/O/C/M 빈칸 채우기)</option>
-          <option value="chunk_translate">청크 + 해석 학습지 (빈칸 + 해석 쓰기 줄)</option>
-          <option value="study">복습용 학습 자료 (정답·해석 모두 표시)</option>
+          <option value="guided">학습용 — 청크가 미리 나뉘어 있어요 (S/V/O/C/M 빈칸만 채우기)</option>
+          <option value="blank">연습문제용 — 문장을 그대로 주고 아이가 직접 끊어요 (빈칸 없이)</option>
+          <option value="study">복습용 — 정답·해석 모두 표시</option>
         </select>
+      </div>
+      <div class="field check-row">
+        <label class="check-inline"><input type="checkbox" id="printTranslateLine"> 해석 쓰는 줄도 포함 (학습용·연습문제용)</label>
       </div>
       <div class="field check-row">
         <label class="check-inline"><input type="checkbox" id="printAnswerKey" checked> 맨 뒤에 정답지 포함</label>
@@ -1580,9 +1586,15 @@ function buildWsChunkBlanks(s) {
   `).join('');
 }
 
-function renderWorksheet(level, sentences, type, includeKey) {
+function renderWorksheet(level, sentences, type, includeKey, includeTranslateLine) {
   const wrap = document.getElementById('printPreviewWrap');
-  const titleMap = { chunk: '청크 분석 학습지', chunk_translate: '청크 + 해석 학습지', study: '복습용 학습 자료' };
+  const titleMap = {
+    guided: '학습용 끊어읽기 학습지 (청크 미리 표시)',
+    blank: '연습문제 — 직접 끊어보기',
+    study: '복습용 학습 자료',
+  };
+
+  const translateLineHtml = `<div class="ws-translate-line"></div><div class="ws-translate-caption">해석을 써보세요</div>`;
 
   const itemsHtml = sentences.map((s, i) => {
     if (type === 'study') {
@@ -1598,14 +1610,26 @@ function renderWorksheet(level, sentences, type, includeKey) {
           </div>
         </li>`;
     }
-    const translateLine = type === 'chunk_translate'
-      ? `<div class="ws-translate-line"></div><div class="ws-translate-caption">해석을 써보세요</div>` : '';
+    if (type === 'blank') {
+      return `
+        <li class="ws-item">
+          <div class="ws-num">${i + 1}.</div>
+          <div class="ws-content">
+            <div class="ws-plain-sentence">${escapeHtml(s.text)}</div>
+            <div class="ws-divide-line"></div>
+            <div class="ws-divide-line"></div>
+            <div class="ws-divide-caption">S(주어)·V(동사)·O(목적어)·C(보어)·M(수식어)으로 끊어서 다시 써보세요</div>
+            ${includeTranslateLine ? translateLineHtml : ''}
+          </div>
+        </li>`;
+    }
+    // guided
     return `
       <li class="ws-item">
         <div class="ws-num">${i + 1}.</div>
         <div class="ws-content">
           <div class="ws-sentence">${buildWsChunkBlanks(s)}</div>
-          ${translateLine}
+          ${includeTranslateLine ? translateLineHtml : ''}
         </div>
       </li>`;
   }).join('');
@@ -1636,11 +1660,12 @@ document.getElementById('printBuildBtn').addEventListener('click', () => {
   const countRaw = parseInt(document.getElementById('printCount').value, 10);
   const type = document.getElementById('printType').value;
   const includeKey = document.getElementById('printAnswerKey').checked;
+  const includeTranslateLine = document.getElementById('printTranslateLine').checked;
   const pool = sentencesForLevel(level);
   if (pool.length === 0) { alert('이 난이도에는 문장이 없어요.'); return; }
   const count = Math.min(Math.max(countRaw || 10, 1), pool.length, 60);
   const chosen = shuffle(pool).slice(0, count);
-  renderWorksheet(level, chosen, type, includeKey);
+  renderWorksheet(level, chosen, type, includeKey, includeTranslateLine);
   document.getElementById('printNowBtn').disabled = false;
 });
 
