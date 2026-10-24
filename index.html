@@ -2198,8 +2198,27 @@ function renderPracticeTab() {
     const badge = assignedTag ? `<span class="assigned-tag tag-${assignedTag}">${assignedTag}</span>` : '';
     const wrongNote = (practiceState.graded && assignedTag !== ch.g)
       ? `<span class="mark no">정답: ${ch.g}</span>` : (practiceState.graded ? `<span class="mark ok">✓</span>` : '');
-    return `<span class="pchunk-wrap" style="display:inline-flex;align-items:center;gap:4px;">
-      <span class="${cls}" data-idx="${i}">${escapeHtml(ch.t)}${badge}</span>${wrongNote}
+
+    // after grading, let students drill into clause/modifier chunks for review — same as the Study tab
+    const hasSub = Array.isArray(ch.sub) && ch.sub.length > 0;
+    const subKey = s.id + '__' + i;
+    const showDetailBtn = practiceState.graded && hasSub;
+    const subOpen = showDetailBtn && openSubChunks.has(subKey);
+    const detailBtnHtml = showDetailBtn
+      ? `<button type="button" class="chunk-detail-btn" data-subkey="${subKey}">${subOpen ? '▲ 닫기' : '🔍 세부분석'}</button>` : '';
+    const subHtml = subOpen ? `
+      <div class="chunk-sub-line">
+        ${ch.sub.map(sc => `
+          <div class="chunk-sub-box">
+            <span class="chunk-word sub tag-${sc.g}">${escapeHtml(sc.t)}</span>
+            <span class="chunk-label sub tag-${sc.g}">${sc.g}</span>
+          </div>`).join('')}
+      </div>` : '';
+
+    return `<span class="pchunk-wrap" style="display:inline-flex;flex-direction:column;align-items:center;gap:4px;">
+      <span style="display:inline-flex;align-items:center;gap:4px;">
+        <span class="${cls}" data-idx="${i}">${escapeHtml(ch.t)}${badge}</span>${wrongNote}
+      </span>${detailBtnHtml}${subHtml}
     </span>`;
   }).join(' ');
 
@@ -2240,6 +2259,14 @@ function renderPracticeTab() {
       if (practiceState.selectedIdx === null || practiceState.graded) return;
       practiceState.assigned[practiceState.selectedIdx] = btn.dataset.tag;
       practiceState.selectedIdx = null;
+      renderPracticeTab();
+    });
+  });
+  area.querySelectorAll('.chunk-detail-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = btn.dataset.subkey;
+      if (openSubChunks.has(key)) openSubChunks.delete(key); else openSubChunks.add(key);
       renderPracticeTab();
     });
   });
