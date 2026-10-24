@@ -251,6 +251,58 @@ textarea:disabled { opacity: 0.6; }
 .medal-lbl { font-size: 10px; color: var(--text-muted); }
 .medal.unlocked .medal-lbl { color: var(--text); font-weight: 700; }
 
+/* ---- quest map ---- */
+.quest-map-wrap { position: relative; width: 100%; aspect-ratio: 860 / 1290; max-width: 420px; margin: 0 auto;
+  border-radius: 16px; overflow: hidden; background: #cfe3cf; box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
+.quest-map-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.quest-point { position: absolute; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 999px;
+  background: rgba(255,255,255,0.88); border: 3px solid #9c9382; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: #5c5647; box-shadow: 0 2px 5px rgba(0,0,0,0.25); transition: background .3s, border-color .3s, color .3s; z-index: 2; }
+.quest-point.done { background: var(--accent); border-color: var(--accent-strong); color: #fff; }
+.quest-point.city { width: 44px; height: 44px; font-size: 20px; }
+.quest-point.city.done { background: linear-gradient(145deg,#ffe8a3,#e8b84b); border-color:#b8860b;
+  box-shadow: 0 0 0 5px rgba(232,184,75,0.4), 0 3px 8px rgba(0,0,0,0.3); }
+.quest-home { position: absolute; transform: translate(-50%, -50%); font-size: 22px; z-index: 2; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4)); }
+.quest-bear { position: absolute; width: 46px; height: auto; transform: translate(-50%, -88%);
+  filter: drop-shadow(0 5px 6px rgba(0,0,0,0.35)); transition: left 0.9s cubic-bezier(.22,.9,.3,1.1), top 0.9s cubic-bezier(.22,.9,.3,1.1);
+  z-index: 3; animation: questBearBob 1.6s ease-in-out infinite; }
+@keyframes questBearBob { 0%,100% { transform: translate(-50%, -88%); } 50% { transform: translate(-50%, -94%); } }
+.quest-bear-shadow { position: absolute; width: 26px; height: 8px; border-radius: 999px; background: rgba(0,0,0,0.3);
+  transform: translate(-50%, -4px); transition: left 0.9s cubic-bezier(.22,.9,.3,1.1), top 0.9s cubic-bezier(.22,.9,.3,1.1); z-index: 2; filter: blur(1px); }
+.quest-progress-label { font-size: 13px; font-weight: 700; color: var(--text-strong); margin: 0.65rem 0 0.15rem; text-align: center; }
+.quest-progress-sub { font-size: 12px; color: var(--text-muted); text-align: center; }
+.quest-bar { height: 8px; border-radius: 999px; background: var(--border-soft); overflow: hidden; margin: 0.45rem 0 0.2rem; }
+.quest-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #e8b84b); border-radius: 999px; transition: width .6s ease; }
+.quest-conquest-banner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
+  background: rgba(24,22,15,0.5); opacity: 0; pointer-events: none; z-index: 5; }
+.quest-conquest-banner.show { animation: questBannerPulse 2.8s ease forwards; }
+.quest-conquest-banner .msg { background: linear-gradient(145deg,#fff3cf,#f3d27a); color: #4a3400; font-weight: 800; font-size: 17px; line-height: 1.5;
+  padding: 14px 22px; border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,0.35); border: 2px solid #b8860b; }
+@keyframes questBannerPulse { 0% { opacity: 0; } 10% { opacity: 1; } 82% { opacity: 1; } 100% { opacity: 0; } }
+.quest-confetti { position: absolute; top: -12px; width: 7px; height: 13px; opacity: 0.95; z-index: 6; animation: questConfettiFall linear forwards; }
+@keyframes questConfettiFall { to { transform: translateY(420px) rotate(560deg); opacity: 0; } }
+
+/* ---- card collection ---- */
+.card-collect-summary { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+.card-collect-count { font-size: 13px; font-weight: 700; color: var(--text-strong); }
+.card-theme-group { margin-bottom: 0.9rem; }
+.card-theme-title { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem; }
+.card-theme-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.collect-card { width: 72px; border-radius: 9px; overflow: hidden; border: 1px solid var(--border-soft); background: var(--surface-sunken);
+  aspect-ratio: 260/380; position: relative; transition: transform .2s ease; }
+.collect-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.collect-card.locked { display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 20px; }
+.collect-card.locked::after { content: '🔒'; opacity: 0.55; }
+.collect-card.just-drawn { animation: cardPop .6s cubic-bezier(.22,.9,.3,1.3); box-shadow: 0 0 0 3px var(--accent); }
+@keyframes cardPop { 0% { transform: scale(0.4) rotate(-8deg); opacity: 0; } 60% { transform: scale(1.12) rotate(3deg); } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+.card-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); z-index: 50;
+  background: var(--surface); border: 2px solid var(--accent); border-radius: 14px; padding: 10px 16px; display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.25); opacity: 0; pointer-events: none; transition: opacity .3s ease, transform .3s ease; max-width: 90vw; }
+.card-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.card-toast img { width: 40px; height: auto; border-radius: 5px; }
+.card-toast .ct-text { font-size: 12.5px; font-weight: 700; color: var(--text-strong); line-height: 1.4; }
+.card-toast .ct-text small { display: block; font-weight: 500; color: var(--text-muted); font-size: 11px; }
+
 /* ---- print tab ---- */
 .check-row { display: flex; align-items: center; }
 .check-inline { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text); font-weight: 500; cursor: pointer; }
@@ -392,6 +444,28 @@ textarea:disabled { opacity: 0.6; }
   <!-- 학습 현황 탭 -->
   <section id="tab-stats" class="tab-panel">
     <div class="card">
+      <div class="card-head">
+        <img class="card-mascot" src="assets/quest-bear.webp" alt="탐험가 곰">
+        <h2>🗺️ 탐험가 곰의 도시 정복 여정</h2>
+      </div>
+      <p class="hint">문장을 10개 연습할 때마다 곰이 다음 지점으로 이동해요. 10개 지점을 모두 지나 도시에 도착하면 그 도시를 정복할 수 있어요. 도시를 정복하면 다음 세계로 떠나요!</p>
+      <div class="quest-map-wrap" id="questMapWrap">
+        <img class="quest-map-bg" src="assets/quest-map.webp" alt="모험 지도">
+        <div class="quest-conquest-banner" id="questBanner"><div class="msg"></div></div>
+      </div>
+      <div class="quest-progress-label" id="questProgressLabel"></div>
+      <div class="quest-bar"><div class="quest-bar-fill" id="questBarFill" style="width:0%"></div></div>
+      <div class="quest-progress-sub" id="questProgressSub"></div>
+    </div>
+    <div class="card">
+      <h2>🎴 모험 카드 컬렉션</h2>
+      <p class="hint">문장을 20개 연습할 때마다 새로운 카드를 뽑아요. 같은 세계의 카드를 5장 모두 모으면 그 세계를 완전히 정복한 거예요!</p>
+      <div class="card-collect-summary">
+        <div class="card-collect-count" id="cardCollectCount">0 / 40 수집</div>
+      </div>
+      <div id="cardCollectWrap"></div>
+    </div>
+    <div class="card">
       <h2>🏆 나의 피규어 컬렉션</h2>
       <p class="hint">꾸준히 연습하면 피규어와 메달을 모을 수 있어요. 조건을 채우면 자동으로 잠금이 풀려요!</p>
       <div class="figure-row" id="figureRow"></div>
@@ -450,6 +524,8 @@ textarea:disabled { opacity: 0.6; }
     <div id="printPreviewWrap"></div>
   </section>
 </div>
+
+<div class="card-toast" id="cardToast"><img id="cardToastImg" src="" alt=""><div class="ct-text" id="cardToastText"></div></div>
 
 <script>
 /* ================= data ================= */
@@ -1697,6 +1773,50 @@ const MASCOTS = {
   bear: { src: 'assets/mascot-bear.webp', name: '곰' },
 };
 
+/* 모험 카드 컬렉션: 8개 세계 x 5단계 = 40장 */
+const CARDS = [
+  { id:'mountain-1', name:'자갈 알', en:'PEBBI', stage:1, hp:60, themeId:'mountain', themeName:'산', img:'assets/cards/mountain-1.webp' },
+  { id:'mountain-2', name:'이끼 달팽이', en:'MOSSI', stage:2, hp:90, themeId:'mountain', themeName:'산', img:'assets/cards/mountain-2.webp' },
+  { id:'mountain-3', name:'바위 비늘짐승', en:'CRAGLET', stage:3, hp:130, themeId:'mountain', themeName:'산', img:'assets/cards/mountain-3.webp' },
+  { id:'mountain-4', name:'능선 거북', en:'RIDGON', stage:4, hp:180, themeId:'mountain', themeName:'산', img:'assets/cards/mountain-4.webp' },
+  { id:'mountain-5', name:'걸어 다니는 산', en:'MOUNTHOME', stage:5, hp:250, themeId:'mountain', themeName:'산', img:'assets/cards/mountain-5.webp' },
+  { id:'sea-1', name:'산호 조각', en:'CORI', stage:1, hp:60, themeId:'sea', themeName:'바다', img:'assets/cards/sea-1.webp' },
+  { id:'sea-2', name:'조개 생물', en:'SHELLI', stage:2, hp:90, themeId:'sea', themeName:'바다', img:'assets/cards/sea-2.webp' },
+  { id:'sea-3', name:'산호 가오리', en:'REEFLIT', stage:3, hp:130, themeId:'sea', themeName:'바다', img:'assets/cards/sea-3.webp' },
+  { id:'sea-4', name:'산호초 고래', en:'CORALUNE', stage:4, hp:180, themeId:'sea', themeName:'바다', img:'assets/cards/sea-4.webp' },
+  { id:'sea-5', name:'살아 있는 섬', en:'ISLAVIA', stage:5, hp:250, themeId:'sea', themeName:'바다', img:'assets/cards/sea-5.webp' },
+  { id:'water-1', name:'물방울', en:'DRIPPI', stage:1, hp:60, themeId:'water', themeName:'물', img:'assets/cards/water-1.webp' },
+  { id:'water-2', name:'물결 해파리', en:'RIPPLI', stage:2, hp:90, themeId:'water', themeName:'물', img:'assets/cards/water-2.webp' },
+  { id:'water-3', name:'시냇물 수달', en:'BROOKI', stage:3, hp:130, themeId:'water', themeName:'물', img:'assets/cards/water-3.webp' },
+  { id:'water-4', name:'폭포 환수', en:'CASCADE', stage:4, hp:180, themeId:'water', themeName:'물', img:'assets/cards/water-4.webp' },
+  { id:'water-5', name:'호수 구름', en:'LAKEMIST', stage:5, hp:250, themeId:'water', themeName:'물', img:'assets/cards/water-5.webp' },
+  { id:'fire-1', name:'불티', en:'SPARKI', stage:1, hp:60, themeId:'fire', themeName:'불', img:'assets/cards/fire-1.webp' },
+  { id:'fire-2', name:'숯불 도롱뇽', en:'CINDLET', stage:2, hp:90, themeId:'fire', themeName:'불', img:'assets/cards/fire-2.webp' },
+  { id:'fire-3', name:'화로 등껍질 짐승', en:'BRAZORI', stage:3, hp:130, themeId:'fire', themeName:'불', img:'assets/cards/fire-3.webp' },
+  { id:'fire-4', name:'용암 갈기 맹수', en:'MAGMANE', stage:4, hp:180, themeId:'fire', themeName:'불', img:'assets/cards/fire-4.webp' },
+  { id:'fire-5', name:'화산 생명체', en:'VOLCARUM', stage:5, hp:250, themeId:'fire', themeName:'불', img:'assets/cards/fire-5.webp' },
+  { id:'stars-1', name:'빛의 티끌', en:'GLINT', stage:1, hp:60, themeId:'stars', themeName:'별', img:'assets/cards/stars-1.webp' },
+  { id:'stars-2', name:'별 알', en:'STELLEGG', stage:2, hp:90, themeId:'stars', themeName:'별', img:'assets/cards/stars-2.webp' },
+  { id:'stars-3', name:'유성 나방', en:'METEORA', stage:3, hp:130, themeId:'stars', themeName:'별', img:'assets/cards/stars-3.webp' },
+  { id:'stars-4', name:'혜성 날개의 새', en:'COMETAIL', stage:4, hp:180, themeId:'stars', themeName:'별', img:'assets/cards/stars-4.webp' },
+  { id:'stars-5', name:'별자리 불사조', en:'ASTRAPHEN', stage:5, hp:250, themeId:'stars', themeName:'별', img:'assets/cards/stars-5.webp' },
+  { id:'cosmos-1', name:'별 결정', en:'LUMI', stage:1, hp:60, themeId:'cosmos', themeName:'우주', img:'assets/cards/cosmos-1.webp' },
+  { id:'cosmos-2', name:'우주 해파리', en:'NIMBI', stage:2, hp:90, themeId:'cosmos', themeName:'우주', img:'assets/cards/cosmos-2.webp' },
+  { id:'cosmos-3', name:'궤도 가오리', en:'ORBITA', stage:3, hp:130, themeId:'cosmos', themeName:'우주', img:'assets/cards/cosmos-3.webp' },
+  { id:'cosmos-4', name:'초승달 고래', en:'LUNAFIN', stage:4, hp:180, themeId:'cosmos', themeName:'우주', img:'assets/cards/cosmos-4.webp' },
+  { id:'cosmos-5', name:'성운 환수', en:'ASTRAVEIL', stage:5, hp:250, themeId:'cosmos', themeName:'우주', img:'assets/cards/cosmos-5.webp' },
+  { id:'bakery-1', name:'반죽 방울', en:'CRUMI', stage:1, hp:60, themeId:'bakery', themeName:'빵집', img:'assets/cards/bakery-1.webp' },
+  { id:'bakery-2', name:'접힌 반죽 생물', en:'FOLLI', stage:2, hp:90, themeId:'bakery', themeName:'빵집', img:'assets/cards/bakery-2.webp' },
+  { id:'bakery-3', name:'크루아상 날개 생물', en:'CROVI', stage:3, hp:130, themeId:'bakery', themeName:'빵집', img:'assets/cards/bakery-3.webp' },
+  { id:'bakery-4', name:'식빵 수호수', en:'LOAFIN', stage:4, hp:180, themeId:'bakery', themeName:'빵집', img:'assets/cards/bakery-4.webp' },
+  { id:'bakery-5', name:'살아 있는 빵집', en:'HEARTHOME', stage:5, hp:250, themeId:'bakery', themeName:'빵집', img:'assets/cards/bakery-5.webp' },
+  { id:'fruit-1', name:'과일 씨앗', en:'PIPPI', stage:1, hp:60, themeId:'fruit', themeName:'과일가게', img:'assets/cards/fruit-1.webp' },
+  { id:'fruit-2', name:'껍질 애벌레', en:'PEELI', stage:2, hp:90, themeId:'fruit', themeName:'과일가게', img:'assets/cards/fruit-2.webp' },
+  { id:'fruit-3', name:'과육 날개 나비', en:'FRUTTER', stage:3, hp:130, themeId:'fruit', themeName:'과일가게', img:'assets/cards/fruit-3.webp' },
+  { id:'fruit-4', name:'과일바구니 짐승', en:'BASKORI', stage:4, hp:180, themeId:'fruit', themeName:'과일가게', img:'assets/cards/fruit-4.webp' },
+  { id:'fruit-5', name:'걸어 다니는 과일 정원', en:'ORCHOME', stage:5, hp:250, themeId:'fruit', themeName:'과일가게', img:'assets/cards/fruit-5.webp' },
+];
+
 function loadCustom() {
   try { return JSON.parse(localStorage.getItem(CUSTOM_KEY)) || []; } catch (e) { return []; }
 }
@@ -2142,6 +2262,186 @@ function renderMedalRow() {
   }).join('');
 }
 
+/* ================= quest map ================= */
+const QUEST_STAGE_COUNT = 10;     // points per city (every 10 sentences)
+const QUEST_SENT_PER_CITY = 100;  // sentences to fully conquer one city
+const QUEST_CITY_COUNT = 8;       // matches the 8 card themes below
+const QUEST_POSITIONS = [
+  { x: 49, y: 94 }, { x: 37, y: 88 }, { x: 46, y: 73 }, { x: 71, y: 74 }, { x: 51, y: 68 },
+  { x: 25, y: 72 }, { x: 74, y: 51 }, { x: 22, y: 44 }, { x: 46, y: 39 }, { x: 74, y: 34 }, { x: 67, y: 12 },
+];
+const QUEST_CITY_NAMES = ['산', '바다', '물', '불', '별', '우주', '빵집', '과일가게'];
+
+let questBuilt = false;
+let questLastKey = null; // "cityIndex-stage" of the last render, to detect new arrivals
+
+function cityProgressFor(totalDone) {
+  const capped = Math.min(totalDone, QUEST_SENT_PER_CITY * QUEST_CITY_COUNT);
+  let cityIndex, progressInCity;
+  if (capped > 0 && capped % QUEST_SENT_PER_CITY === 0) {
+    cityIndex = Math.min(capped / QUEST_SENT_PER_CITY - 1, QUEST_CITY_COUNT - 1);
+    progressInCity = QUEST_SENT_PER_CITY;
+  } else {
+    cityIndex = Math.min(Math.floor(capped / QUEST_SENT_PER_CITY), QUEST_CITY_COUNT - 1);
+    progressInCity = capped - cityIndex * QUEST_SENT_PER_CITY;
+  }
+  const stage = Math.floor(progressInCity / (QUEST_SENT_PER_CITY / QUEST_STAGE_COUNT));
+  return { cityIndex, progressInCity, stage };
+}
+
+function buildQuestMap() {
+  const wrap = document.getElementById('questMapWrap');
+  if (!wrap || questBuilt) return;
+  const home = document.createElement('div');
+  home.className = 'quest-home';
+  home.id = 'questHome';
+  home.textContent = '🏕️';
+  wrap.appendChild(home);
+  for (let i = 1; i <= QUEST_STAGE_COUNT; i++) {
+    const isCity = i === QUEST_STAGE_COUNT;
+    const pt = document.createElement('div');
+    pt.className = 'quest-point' + (isCity ? ' city' : '');
+    pt.id = 'questPoint' + i;
+    pt.textContent = isCity ? '🏰' : String(i);
+    wrap.appendChild(pt);
+  }
+  const shadow = document.createElement('div');
+  shadow.className = 'quest-bear-shadow';
+  shadow.id = 'questBearShadow';
+  wrap.appendChild(shadow);
+  const bear = document.createElement('img');
+  bear.className = 'quest-bear';
+  bear.id = 'questBear';
+  bear.src = 'assets/quest-bear.webp';
+  bear.alt = '탐험가 곰';
+  wrap.appendChild(bear);
+  QUEST_POSITIONS.forEach((pos, i) => {
+    const el = i === 0 ? document.getElementById('questHome') : document.getElementById('questPoint' + i);
+    if (el) { el.style.left = pos.x + '%'; el.style.top = pos.y + '%'; }
+  });
+  questBuilt = true;
+}
+
+function spawnConfetti(wrap) {
+  const colors = ['#e8b84b', '#175fa0', '#1e7a44', '#b2382d', '#6f3f96'];
+  for (let i = 0; i < 24; i++) {
+    const el = document.createElement('div');
+    el.className = 'quest-confetti';
+    el.style.left = Math.random() * 100 + '%';
+    el.style.background = colors[i % colors.length];
+    el.style.animationDuration = (1.3 + Math.random() * 1.1) + 's';
+    el.style.animationDelay = (Math.random() * 0.4) + 's';
+    wrap.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  }
+}
+
+function updateQuestMap() {
+  const wrap = document.getElementById('questMapWrap');
+  if (!wrap) return;
+  buildQuestMap();
+  const overall = getOverallStats();
+  const totalDone = overall.attempted;
+  const { cityIndex, progressInCity, stage } = cityProgressFor(totalDone);
+  const pos = QUEST_POSITIONS[stage];
+  const bear = document.getElementById('questBear');
+  const shadow = document.getElementById('questBearShadow');
+  if (bear) { bear.style.left = pos.x + '%'; bear.style.top = pos.y + '%'; }
+  if (shadow) { shadow.style.left = pos.x + '%'; shadow.style.top = pos.y + '%'; }
+  for (let i = 1; i <= QUEST_STAGE_COUNT; i++) {
+    const el = document.getElementById('questPoint' + i);
+    if (el) el.classList.toggle('done', stage >= i);
+  }
+  const cityName = QUEST_CITY_NAMES[cityIndex];
+  const label = document.getElementById('questProgressLabel');
+  const sub = document.getElementById('questProgressSub');
+  const barFill = document.getElementById('questBarFill');
+  if (barFill) barFill.style.width = (progressInCity / QUEST_SENT_PER_CITY * 100) + '%';
+  const allConquered = cityIndex === QUEST_CITY_COUNT - 1 && stage >= QUEST_STAGE_COUNT;
+  if (stage >= QUEST_STAGE_COUNT) {
+    if (label) label.textContent = allConquered
+      ? `🏆 ${cityIndex + 1}번째 도시(${cityName}) 정복! 모든 세계를 정복했어요!`
+      : `🏆 ${cityIndex + 1}번째 도시(${cityName}) 정복 완료!`;
+    if (sub) sub.textContent = `지금까지 총 ${totalDone}문장을 연습했어요.`;
+  } else {
+    const remain = (stage + 1) * (QUEST_SENT_PER_CITY / QUEST_STAGE_COUNT) - progressInCity;
+    if (label) label.textContent = `${cityIndex + 1}번째 도시 · ${cityName} 세계 · ${stage}/${QUEST_STAGE_COUNT} 지점 · 다음 지점까지 ${remain}문장`;
+    if (sub) sub.textContent = `지금까지 총 ${totalDone}문장을 연습했어요.`;
+  }
+
+  const key = cityIndex + '-' + stage;
+  if (questLastKey === null) {
+    questLastKey = key; // first load: show final state silently, no celebration replay
+  } else if (key !== questLastKey) {
+    if (stage >= QUEST_STAGE_COUNT) {
+      const banner = document.getElementById('questBanner');
+      if (banner) {
+        banner.querySelector('.msg').innerHTML = allConquered
+          ? `🎉 모든 도시 정복! 🎉<br><span style="font-size:13px;font-weight:600;">8개 세계를 모두 정복했어요!</span>`
+          : `🎉 ${cityName} 도시 정복! 🎉<br><span style="font-size:13px;font-weight:600;">${(cityIndex + 1) * QUEST_SENT_PER_CITY}문장 연습 달성</span>`;
+        banner.classList.remove('show'); void banner.offsetWidth; banner.classList.add('show');
+      }
+      spawnConfetti(wrap);
+    }
+    questLastKey = key;
+  }
+}
+
+/* ================= card collection ================= */
+let cardLastCount = null;
+
+function renderCardCollection() {
+  const wrap = document.getElementById('cardCollectWrap');
+  if (!wrap) return;
+  const overall = getOverallStats();
+  const unlockedCount = Math.min(Math.floor(overall.attempted / 20), CARDS.length);
+  const countLbl = document.getElementById('cardCollectCount');
+  if (countLbl) countLbl.textContent = `${unlockedCount} / ${CARDS.length} 수집`;
+
+  const byTheme = {};
+  CARDS.forEach((c, i) => {
+    (byTheme[c.themeId] = byTheme[c.themeId] || []).push({ ...c, idx: i });
+  });
+
+  wrap.innerHTML = Object.keys(byTheme).map(themeId => {
+    const cards = byTheme[themeId];
+    const unlockedInTheme = cards.filter(c => c.idx < unlockedCount).length;
+    return `
+      <div class="card-theme-group">
+        <div class="card-theme-title">${escapeHtml(cards[0].themeName)} 세계 · ${unlockedInTheme}/${cards.length}</div>
+        <div class="card-theme-row">
+          ${cards.map(c => {
+            const unlocked = c.idx < unlockedCount;
+            return unlocked
+              ? `<div class="collect-card" data-idx="${c.idx}"><img src="${c.img}" alt="${escapeHtml(c.name)}" loading="lazy"></div>`
+              : `<div class="collect-card locked" data-idx="${c.idx}"></div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (cardLastCount === null) {
+    cardLastCount = unlockedCount; // first load: no draw animation/toast
+  } else if (unlockedCount > cardLastCount) {
+    const justDrawn = CARDS[unlockedCount - 1];
+    const el = wrap.querySelector(`.collect-card[data-idx="${unlockedCount - 1}"]`);
+    if (el) el.classList.add('just-drawn');
+    showCardToast(justDrawn);
+    cardLastCount = unlockedCount;
+  }
+}
+
+function showCardToast(card) {
+  const toast = document.getElementById('cardToast');
+  if (!toast || !card) return;
+  document.getElementById('cardToastImg').src = card.img;
+  document.getElementById('cardToastText').innerHTML = `🎴 새 카드 획득!<small>${escapeHtml(card.themeName)} · ${escapeHtml(card.name)} (${escapeHtml(card.en)})</small>`;
+  toast.classList.add('show');
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 3400);
+}
+
 /* ================= stats tab ================= */
 function renderStatsTab() {
   const wrap = document.getElementById('statsWrap');
@@ -2163,8 +2463,10 @@ function renderStatsTab() {
 }
 
 document.getElementById('resetStatsBtn').addEventListener('click', () => {
-  if (!confirm('모든 학습 기록을 초기화할까요? 되돌릴 수 없습니다. (모은 피규어와 메달도 초기화돼요)')) return;
+  if (!confirm('모든 학습 기록을 초기화할까요? 되돌릴 수 없습니다. (모은 피규어와 메달, 모험 지도 진행도, 카드도 모두 초기화돼요)')) return;
   localStorage.removeItem(STATS_KEY);
+  questLastKey = null;
+  cardLastCount = null;
   renderAll();
 });
 
@@ -2306,6 +2608,8 @@ function renderAll() {
   renderStatsTab();
   renderFigureRow();
   renderMedalRow();
+  updateQuestMap();
+  renderCardCollection();
   renderPrintLevelSelect();
 }
 renderAll();
