@@ -188,6 +188,19 @@ textarea:disabled { opacity: 0.6; }
 .mark.ok { color: var(--ok); }
 .mark.no { color: var(--danger); }
 
+/* ---- split (직접 끊어보기) boundary phase ---- */
+.split-sentence { display: flex; flex-wrap: wrap; align-items: center; font-size: 16px; line-height: 2.4; margin: 0.9rem 0; }
+.split-word { padding: 2px 2px; color: var(--text-strong); font-weight: 600; white-space: nowrap; }
+.split-gap { width: 16px; height: 30px; border: none; background: transparent; cursor: pointer; position: relative; flex-shrink: 0; padding: 0; }
+.split-gap::before { content: ''; position: absolute; left: 50%; top: 3px; bottom: 3px; width: 2px; background: var(--border); transform: translateX(-50%); border-radius: 2px; }
+.split-gap:hover::before { background: var(--text-muted); }
+.split-gap.on::before { background: var(--accent); width: 3px; }
+.split-gap.correct::before { background: var(--ok); width: 3px; }
+.split-gap.wrong::before { background: var(--danger); width: 3px; }
+.split-gap.missed::before { content: ''; background: none; border-left: 2px dashed var(--tag-m-fg); width: 0; }
+.split-feedback { font-size: 13px; font-weight: 700; padding: 0.55rem 0.75rem; border-radius: 8px; background: var(--danger-soft); color: var(--danger); margin-bottom: 0.5rem; }
+.split-feedback.ok { background: var(--ok-soft); color: var(--ok); }
+
 .tag-picker { display: flex; gap: 8px; margin: 1rem 0; flex-wrap: wrap; }
 .tag-btn { border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
 .tag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -1766,6 +1779,7 @@ const MODE_KEY = 'chunkAppPracticeMode';
 const TRACKS = {
   chunk: { label: '구문 분석만', short: '구문 분석', hint: '문장을 하나씩 클릭한 뒤, 아래 태그 버튼으로 역할을 지정해보세요.', mascot: 'squirrel' },
   chunk_translate: { label: '구문 + 해석 쓰기', short: '구문+해석', hint: '청크 태그를 모두 지정한 뒤, 문장 전체를 우리말로 해석해서 적어보세요.', mascot: 'bear' },
+  split: { label: '직접 끊어보기', short: '직접 끊기', hint: '단어 사이를 클릭해서 청크 경계를 직접 표시해보세요. 다 끊었으면 경계 확인 버튼을 눌러요.', mascot: 'penguin' },
 };
 const MASCOTS = {
   penguin: { src: 'assets/mascot-penguin.webp', name: '펭귄' },
@@ -1918,8 +1932,8 @@ function renderChunkDisplay(s) {
 }
 
 /* ================= practice tab ================= */
-let practiceMode = localStorage.getItem(MODE_KEY) || 'chunk'; // 'chunk' | 'chunk_translate'
-let practiceState = null; // {sentence, assigned:{idx:tag}, graded:bool, selectedIdx, userTranslation}
+let practiceMode = localStorage.getItem(MODE_KEY) || 'chunk'; // 'chunk' | 'chunk_translate' | 'split'
+let practiceState = null; // {sentence, assigned:{idx:tag}, graded:bool, selectedIdx, userTranslation, phase, userBreaks, boundaryChecked}
 let practiceOrderPerLevel = {}; // level -> shuffled list of sentence ids, and cursor
 
 function renderTrackRow() {
@@ -1935,12 +1949,7 @@ function renderTrackRow() {
       if (btn.dataset.track === practiceMode) return;
       practiceMode = btn.dataset.track;
       localStorage.setItem(MODE_KEY, practiceMode);
-      if (practiceState) {
-        practiceState.assigned = {};
-        practiceState.selectedIdx = null;
-        practiceState.graded = false;
-        practiceState.userTranslation = '';
-      }
+      if (practiceState) startPractice(currentLevel, practiceState.sentence.id);
       renderTrackRow();
       renderPracticeTab();
     });
@@ -1958,7 +1967,99 @@ function getPracticeQueue(level) {
 function startPractice(level, sentenceId) {
   const s = sentencesForLevel(level).find(x => x.id === sentenceId);
   if (!s) return;
-  practiceState = { sentence: s, assigned: {}, graded: false, selectedIdx: null, userTranslation: '' };
+  practiceState = {
+    sentence: s, assigned: {}, graded: false, selectedIdx: null, userTranslation: '',
+    phase: practiceMode === 'split' ? 'boundary' : 'tag',
+    userBreaks: new Set(), boundaryChecked: false,
+  };
+}
+
+/* 문장을 단어로 쪼개고, 정답 청크 경계에 해당하는 "간격 인덱스" 집합을 계산 */
+function wordsAndCorrectGaps(s) {
+  const words = s.text.split(/\s+/).filter(Boolean);
+  const gapsCorrect = new Set();
+  let cum = 0;
+  for (let i = 0; i < s.chunks.length - 1; i++) {
+    cum += s.chunks[i].t.split(/\s+/).filter(Boolean).length;
+    gapsCorrect.add(cum - 1);
+  }
+  return { words, gapsCorrect };
+}
+
+function renderBoundaryPhase() {
+  const area = document.getElementById('practiceArea');
+  const s = practiceState.sentence;
+  const { words, gapsCorrect } = wordsAndCorrectGaps(s);
+  const checked = practiceState.boundaryChecked;
+  const totalGaps = words.length - 1;
+
+  let sentHtml = `<span class="split-word">${escapeHtml(words[0])}</span>`;
+  let correctCount = 0;
+  for (let g = 0; g < totalGaps; g++) {
+    const isOn = practiceState.userBreaks.has(g);
+    const shouldBreak = gapsCorrect.has(g);
+    if (isOn === shouldBreak) correctCount++;
+    let gapCls = 'split-gap';
+    if (isOn) gapCls += ' on';
+    if (checked) {
+      if (isOn && shouldBreak) gapCls += ' correct';
+      else if (isOn && !shouldBreak) gapCls += ' wrong';
+      else if (!isOn && shouldBreak) gapCls += ' missed';
+    }
+    sentHtml += `<button type="button" class="${gapCls}" data-gap="${g}" aria-label="여기서 끊기"></button>`;
+    sentHtml += `<span class="split-word">${escapeHtml(words[g + 1])}</span>`;
+  }
+  const allCorrect = checked && correctCount === totalGaps;
+
+  area.innerHTML = `
+    <div class="practice-sentence-src">${TRACKS[practiceMode].hint}</div>
+    <div class="split-sentence" id="splitSentence">${sentHtml}</div>
+    ${checked ? `<div class="split-feedback ${allCorrect ? 'ok' : ''}">${
+      allCorrect
+        ? '🎉 경계를 정확하게 모두 찾았어요! 이제 태그를 붙여볼까요?'
+        : `경계 ${correctCount} / ${totalGaps}개 맞음 — 빨간 선은 잘못 끊은 곳, 점선은 놓친 경계예요. 고쳐서 다시 확인해보세요.`
+    }</div>` : ''}
+    <div class="btn-row">
+      ${allCorrect
+        ? `<button class="btn primary" id="toTagPhaseBtn">다음: 태그 붙이기 →</button>`
+        : `<button class="btn primary" id="checkBoundaryBtn">경계 확인하기</button>`}
+      <button class="btn" id="resetBoundaryBtn">다시 선택</button>
+      <button class="btn" id="nextBtn">다음 문장 →</button>
+    </div>
+  `;
+
+  area.querySelectorAll('.split-gap').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (allCorrect) return;
+      const g = Number(btn.dataset.gap);
+      if (practiceState.userBreaks.has(g)) practiceState.userBreaks.delete(g);
+      else practiceState.userBreaks.add(g);
+      practiceState.boundaryChecked = false;
+      renderPracticeTab();
+    });
+  });
+  const checkBtn = document.getElementById('checkBoundaryBtn');
+  if (checkBtn) checkBtn.addEventListener('click', () => {
+    practiceState.boundaryChecked = true;
+    renderPracticeTab();
+  });
+  const toTagBtn = document.getElementById('toTagPhaseBtn');
+  if (toTagBtn) toTagBtn.addEventListener('click', () => {
+    practiceState.phase = 'tag';
+    practiceState.assigned = {};
+    practiceState.selectedIdx = null;
+    practiceState.graded = false;
+    renderPracticeTab();
+  });
+  document.getElementById('resetBoundaryBtn').addEventListener('click', () => {
+    practiceState.userBreaks = new Set();
+    practiceState.boundaryChecked = false;
+    renderPracticeTab();
+  });
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    nextPracticeSentence();
+    renderPracticeTab();
+  });
 }
 
 function nextPracticeSentence() {
@@ -2003,6 +2104,11 @@ function renderPracticeTab() {
     startPractice(currentLevel, q.ids[q.cursor % q.ids.length]);
   }
 
+  if (practiceMode === 'split' && practiceState.phase === 'boundary') {
+    renderBoundaryPhase();
+    return;
+  }
+
   const s = practiceState.sentence;
   const chunksHtml = s.chunks.map((ch, i) => {
     const assignedTag = practiceState.assigned[i];
@@ -2026,8 +2132,11 @@ function renderPracticeTab() {
     </div>
   ` : '';
 
+  const tagHint = practiceMode === 'split'
+    ? '경계를 잘 찾았어요! 이제 각 청크를 클릭한 뒤, 아래 태그 버튼으로 역할을 지정해보세요.'
+    : TRACKS[practiceMode].hint;
   area.innerHTML = `
-    <div class="practice-sentence-src">${TRACKS[practiceMode].hint}</div>
+    <div class="practice-sentence-src">${tagHint}</div>
     <div class="chunk-line" id="pchunkLine">${chunksHtml}</div>
     <div class="tag-picker" id="tagPicker">
       ${TAGS.map(t => `<button class="tag-btn tag-btn-${t}" data-tag="${t}" ${practiceState.graded ? 'disabled' : ''}>${t} (${TAG_NAMES[t]})</button>`).join('')}
