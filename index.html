@@ -5,109 +5,205 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>영어 문장 끊어읽기 &amp; 청크 분석 연습</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; min-height: 100vh; display: flex; justify-content: center; padding: 2rem 1rem; color: #2c2c2a; }
-.app { max-width: 860px; width: 100%; }
-h1 { font-size: 21px; font-weight: 600; color: #1a1a18; margin-bottom: 0.25rem; }
-.subtitle { font-size: 14px; color: #888; margin-bottom: 1.25rem; }
+:root {
+  --bg: #f4f3ef;
+  --surface: #ffffff;
+  --surface-sunken: #faf9f6;
+  --border: #e6e4de;
+  --border-soft: #eeece6;
+  --text: #322f29;
+  --text-strong: #18160f;
+  --text-muted: #8a8578;
+  --accent: #175fa0;
+  --accent-strong: #0c4177;
+  --accent-soft: #e8f0f9;
+  --danger: #b3382f;
+  --danger-soft: #f7e4e1;
+  --ok: #1e7a4a;
+  --ok-soft: #e7f4ec;
 
-.tabs { display: flex; gap: 6px; margin-bottom: 1.1rem; border-bottom: 1px solid #e8e8e6; }
-.tab-btn { background: transparent; border: none; padding: 0.65rem 0.9rem; font-size: 14px; font-weight: 500; color: #888; cursor: pointer; border-bottom: 2px solid transparent; }
-.tab-btn:hover { color: #185FA5; }
-.tab-btn.active { color: #185FA5; border-bottom-color: #185FA5; }
+  --tag-s-bg: #e7f0fa; --tag-s-fg: #175fa0; --tag-s-bd: #b9d3ef;
+  --tag-v-bg: #fbe9e7; --tag-v-fg: #b2382d; --tag-v-bd: #f0c1ba;
+  --tag-o-bg: #e6f4ea; --tag-o-fg: #1e7a44; --tag-o-bd: #bce2c8;
+  --tag-c-bg: #efe7f7; --tag-c-fg: #6f3f96; --tag-c-bd: #d7c1ec;
+  --tag-m-bg: #fbf0dd; --tag-m-fg: #a86a10; --tag-m-bd: #ecd6a4;
+
+  --shadow: 0 1px 2px rgba(24, 22, 15, 0.04);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171b;
+    --surface: #1c1f24;
+    --surface-sunken: #21242a;
+    --border: #2c2f36;
+    --border-soft: #262931;
+    --text: #d9dbdd;
+    --text-strong: #f3f4f5;
+    --text-muted: #8b8f97;
+    --accent: #5b9bdb;
+    --accent-strong: #83b6e8;
+    --accent-soft: #1f2b3a;
+    --danger: #e28a82;
+    --danger-soft: #3a2422;
+    --ok: #7fca9f;
+    --ok-soft: #1e3227;
+
+    --tag-s-bg: #1c2c40; --tag-s-fg: #8bb8e8; --tag-s-bd: #2f4863;
+    --tag-v-bg: #3a2321; --tag-v-fg: #e6948b; --tag-v-bd: #563430;
+    --tag-o-bg: #1c3226; --tag-o-fg: #86cd9e; --tag-o-bd: #2d4c38;
+    --tag-c-bg: #2b2338; --tag-c-fg: #c6a3e6; --tag-c-bd: #443259;
+    --tag-m-bg: #362a15; --tag-m-fg: #e3b568; --tag-m-bd: #55431f;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15171b; --surface: #1c1f24; --surface-sunken: #21242a; --border: #2c2f36; --border-soft: #262931;
+  --text: #d9dbdd; --text-strong: #f3f4f5; --text-muted: #8b9097; --accent: #5b9bdb; --accent-strong: #83b6e8; --accent-soft: #1f2b3a;
+  --danger: #e28a82; --danger-soft: #3a2422; --ok: #7fca9f; --ok-soft: #1e3227;
+  --tag-s-bg: #1c2c40; --tag-s-fg: #8bb8e8; --tag-s-bd: #2f4863;
+  --tag-v-bg: #3a2321; --tag-v-fg: #e6948b; --tag-v-bd: #563430;
+  --tag-o-bg: #1c3226; --tag-o-fg: #86cd9e; --tag-o-bd: #2d4c38;
+  --tag-c-bg: #2b2338; --tag-c-fg: #c6a3e6; --tag-c-bd: #443259;
+  --tag-m-bg: #362a15; --tag-m-fg: #e3b568; --tag-m-bd: #55431f;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #f4f3ef; --surface: #ffffff; --surface-sunken: #faf9f6; --border: #e6e4de; --border-soft: #eeece6;
+  --text: #322f29; --text-strong: #18160f; --text-muted: #8a8578; --accent: #175fa0; --accent-strong: #0c4177; --accent-soft: #e8f0f9;
+  --danger: #b3382f; --danger-soft: #f7e4e1; --ok: #1e7a4a; --ok-soft: #e7f4ec;
+  --tag-s-bg: #e7f0fa; --tag-s-fg: #175fa0; --tag-s-bd: #b9d3ef;
+  --tag-v-bg: #fbe9e7; --tag-v-fg: #b2382d; --tag-v-bd: #f0c1ba;
+  --tag-o-bg: #e6f4ea; --tag-o-fg: #1e7a44; --tag-o-bd: #bce2c8;
+  --tag-c-bg: #efe7f7; --tag-c-fg: #6f3f96; --tag-c-bd: #d7c1ec;
+  --tag-m-bg: #fbf0dd; --tag-m-fg: #a86a10; --tag-m-bd: #ecd6a4;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", "Malgun Gothic", sans-serif;
+  background: var(--bg); min-height: 100vh; display: flex; justify-content: center;
+  padding: 2rem 1rem 4rem; color: var(--text);
+}
+.app { max-width: 860px; width: 100%; }
+
+/* hero */
+.hero { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 1.1rem; }
+.hero-mascot { width: 72px; height: auto; flex-shrink: 0; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.12)); }
+.hero-text h1 { font-size: 22px; font-weight: 700; color: var(--text-strong); margin-bottom: 0.25rem; letter-spacing: -0.01em; text-wrap: balance; }
+.subtitle { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+
+.tabs { display: flex; gap: 6px; margin-bottom: 1.1rem; border-bottom: 1px solid var(--border); }
+.tab-btn { background: transparent; border: none; padding: 0.65rem 0.9rem; font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; font-family: inherit; }
+.tab-btn:hover { color: var(--accent); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-btn:focus-visible, .btn:focus-visible, .level-pill:focus-visible, .track-pill:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, .pchunk:focus-visible, .tag-btn:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
-.card { background: #fff; border: 1px solid #e8e8e6; border-radius: 14px; padding: 1.25rem 1.4rem; margin-bottom: 1.25rem; }
-.card h2 { font-size: 15px; font-weight: 600; margin-bottom: 0.75rem; color: #1a1a18; }
-.card h3 { font-size: 13px; font-weight: 600; margin: 1rem 0 0.5rem; color: #444; }
-.hint { font-size: 12.5px; color: #999; line-height: 1.6; margin-bottom: 0.75rem; }
-.hint code { background: #f0f0ee; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem 1.4rem; margin-bottom: 1.25rem; box-shadow: var(--shadow); }
+.card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; }
+.card-mascot { width: 40px; height: auto; flex-shrink: 0; }
+.card-head h2 { margin-bottom: 0; }
+.card h2 { font-size: 15px; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-strong); }
+.card h3 { font-size: 13px; font-weight: 700; margin: 1rem 0 0.5rem; color: var(--text); }
+.hint { font-size: 12.5px; color: var(--text-muted); line-height: 1.65; margin-bottom: 0.75rem; }
+.hint code { background: var(--border-soft); padding: 1px 5px; border-radius: 4px; font-size: 12px; color: var(--text); }
 
-label { display: block; font-size: 12.5px; color: #666; margin-bottom: 4px; font-weight: 500; }
+label { display: block; font-size: 12.5px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; }
 input[type=text], textarea, select {
-  width: 100%; border: 1px solid #dcdcd8; border-radius: 8px; padding: 0.6rem 0.75rem; font-size: 14px; font-family: inherit; background: #fafaf8; color: #1a1a18;
+  width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.75rem; font-size: 14px; font-family: inherit; background: var(--surface-sunken); color: var(--text-strong);
 }
-input:focus, textarea:focus, select:focus { outline: none; border-color: #185FA5; background: #fff; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); background: var(--surface); }
 textarea { resize: vertical; min-height: 70px; line-height: 1.6; }
+textarea:disabled { opacity: 0.6; }
 .field { margin-bottom: 0.85rem; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 
-.btn { background: #fff; border: 1px solid #ccc; border-radius: 8px; padding: 0.6rem 1.1rem; font-size: 13.5px; cursor: pointer; color: #444; font-weight: 500; }
-.btn:hover { background: #f0f0ee; }
-.btn.primary { background: #185FA5; color: #fff; border-color: transparent; }
-.btn.primary:hover { background: #0c447c; }
-.btn.danger { color: #b33; border-color: #eecccc; }
-.btn.danger:hover { background: #fdf0f0; }
+.btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 1.1rem; font-size: 13.5px; cursor: pointer; color: var(--text); font-weight: 600; font-family: inherit; }
+.btn:hover { background: var(--border-soft); }
+.btn.primary { background: var(--accent); color: #fff; border-color: transparent; }
+.btn.primary:hover { background: var(--accent-strong); }
+.btn.danger { color: var(--danger); border-color: var(--danger-soft); }
+.btn.danger:hover { background: var(--danger-soft); }
 .btn.small { padding: 0.35rem 0.7rem; font-size: 12.5px; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.5rem; align-items: center; }
 
 /* level pills */
 .level-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.1rem; }
-.level-pill { background: #fff; border: 1px solid #dcdcd8; border-radius: 999px; padding: 0.45rem 0.95rem; font-size: 13px; font-weight: 600; color: #666; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-.level-pill:hover { border-color: #185FA5; color: #185FA5; }
-.level-pill.active { background: #185FA5; border-color: #185FA5; color: #fff; }
-.level-pill .prog { font-size: 10.5px; font-weight: 500; opacity: 0.85; }
+.level-pill { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 0.45rem 0.95rem; font-size: 13px; font-weight: 700; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit; font-variant-numeric: tabular-nums; }
+.level-pill:hover { border-color: var(--accent); color: var(--accent); }
+.level-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.level-pill .prog { font-size: 10.5px; font-weight: 600; opacity: 0.85; }
 
 /* track pills */
 .track-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 0.9rem; }
-.track-pill { background: #fff; border: 1px solid #dcdcd8; border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 12.5px; font-weight: 600; color: #666; cursor: pointer; }
-.track-pill:hover { border-color: #185FA5; color: #185FA5; }
-.track-pill.active { background: #eaf1fb; border-color: #185FA5; color: #185FA5; }
+.track-pill { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 0.35rem 0.9rem 0.35rem 0.4rem; font-size: 12.5px; font-weight: 700; color: var(--text-muted); cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
+.track-pill:hover { border-color: var(--accent); color: var(--accent); }
+.track-pill.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.track-pill img { width: 22px; height: 22px; object-fit: contain; object-position: top; }
 
 /* tag colors */
-.tag-S { background: #eaf1fb; color: #185FA5; border: 1px solid #b9d3f0; }
-.tag-V { background: #fdecec; color: #c0392b; border: 1px solid #f3c2c2; }
-.tag-O { background: #eaf7ee; color: #1e8449; border: 1px solid #bfe6cc; }
-.tag-C { background: #f3ecfb; color: #7d3c98; border: 1px solid #d9c2ef; }
-.tag-M { background: #fdf3e3; color: #b9770e; border: 1px solid #f2ddb0; }
+.tag-S { background: var(--tag-s-bg); color: var(--tag-s-fg); border: 1px solid var(--tag-s-bd); }
+.tag-V { background: var(--tag-v-bg); color: var(--tag-v-fg); border: 1px solid var(--tag-v-bd); }
+.tag-O { background: var(--tag-o-bg); color: var(--tag-o-fg); border: 1px solid var(--tag-o-bd); }
+.tag-C { background: var(--tag-c-bg); color: var(--tag-c-fg); border: 1px solid var(--tag-c-bd); }
+.tag-M { background: var(--tag-m-bg); color: var(--tag-m-fg); border: 1px solid var(--tag-m-bd); }
 
 .legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 0.9rem; font-size: 12.5px; }
-.legend-item { display: flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-weight: 600; }
+.legend-item { display: flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-weight: 700; }
 
 /* sentence chunk display */
 .chunk-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin: 0.9rem 0 0.35rem; }
 .chunk-box { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .chunk-word { border-radius: 8px; padding: 0.4rem 0.65rem; font-size: 15px; font-weight: 500; line-height: 1.3; }
-.chunk-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; padding: 1px 7px; border-radius: 999px; }
-.sent-meta { font-size: 12.5px; color: #888; margin-top: 0.4rem; }
-.sent-grammar { display: inline-block; background: #f0f0ee; color: #555; border-radius: 6px; padding: 1px 8px; font-size: 11.5px; margin-right: 6px; }
-.sent-note { font-size: 12px; color: #a67c00; background: #fffaf0; border: 1px solid #f2e2b8; border-radius: 8px; padding: 0.5rem 0.7rem; margin-top: 0.5rem; line-height: 1.55; }
+.chunk-label { font-size: 10.5px; font-weight: 800; letter-spacing: 0.03em; padding: 1px 7px; border-radius: 999px; }
+.sent-meta { font-size: 12.5px; color: var(--text-muted); margin-top: 0.4rem; }
+.sent-grammar { display: inline-block; background: var(--border-soft); color: var(--text); border-radius: 6px; padding: 1px 8px; font-size: 11.5px; margin-right: 6px; }
+.sent-note { font-size: 12px; color: var(--tag-m-fg); background: var(--tag-m-bg); border: 1px solid var(--tag-m-bd); border-radius: 8px; padding: 0.5rem 0.7rem; margin-top: 0.5rem; line-height: 1.55; }
 
 /* study list */
-.sentence-item { border: 1px solid #e8e8e6; border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 10px; cursor: pointer; }
-.sentence-item:hover { border-color: #185FA5; }
-.sentence-item.open { border-color: #185FA5; background: #fafcff; }
-.sentence-item .sent-text { font-size: 14.5px; font-weight: 500; color: #1a1a18; }
-.sentence-item .sent-summary { font-size: 12px; color: #999; margin-top: 3px; }
-.custom-badge { background: #185FA5; color: #fff; border-radius: 5px; padding: 0 6px; font-size: 10.5px; margin-left: 6px; }
+.sentence-item { border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 10px; cursor: pointer; }
+.sentence-item:hover { border-color: var(--accent); }
+.sentence-item.open { border-color: var(--accent); background: var(--accent-soft); }
+.sentence-item .sent-text { font-size: 14.5px; font-weight: 600; color: var(--text-strong); }
+.sentence-item .sent-summary { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.custom-badge { background: var(--accent); color: #fff; border-radius: 5px; padding: 0 6px; font-size: 10.5px; margin-left: 6px; }
 
 /* practice */
-.practice-progress { font-size: 12.5px; color: #888; margin-bottom: 0.5rem; }
-.practice-sentence-src { font-size: 13px; color: #aaa; margin-bottom: 0.6rem; }
-.pchunk { border: 2px solid #ddd; border-radius: 8px; padding: 0.4rem 0.65rem; font-size: 15px; font-weight: 500; cursor: pointer; background: #fafaf8; color: #333; position: relative; }
-.pchunk.selected { border-color: #185FA5; box-shadow: 0 0 0 2px #d6e6f7; }
+.practice-progress { font-size: 12.5px; color: var(--text-muted); margin-bottom: 0.5rem; font-variant-numeric: tabular-nums; }
+.practice-sentence-src { font-size: 13px; color: var(--text-muted); margin-bottom: 0.6rem; }
+.pchunk { border: 2px solid var(--border); border-radius: 8px; padding: 0.4rem 0.65rem; font-size: 15px; font-weight: 500; cursor: pointer; background: var(--surface-sunken); color: var(--text); position: relative; }
+.pchunk.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .pchunk .assigned-tag { position: absolute; top: -10px; right: -6px; font-size: 10px; font-weight: 800; border-radius: 999px; padding: 0px 5px; }
-.pchunk.graded-correct { border-color: #1e8449; }
-.pchunk.graded-wrong { border-color: #c0392b; }
+.pchunk.graded-correct { border-color: var(--ok); }
+.pchunk.graded-wrong { border-color: var(--danger); }
 .mark { font-size: 13px; font-weight: 800; margin-left: 4px; }
-.mark.ok { color: #1e8449; }
-.mark.no { color: #c0392b; }
+.mark.ok { color: var(--ok); }
+.mark.no { color: var(--danger); }
 
 .tag-picker { display: flex; gap: 8px; margin: 1rem 0; flex-wrap: wrap; }
-.tag-btn { border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-size: 14px; font-weight: 700; cursor: pointer; }
+.tag-btn { border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
 .tag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.tag-btn-S { background: #eaf1fb; color: #185FA5; }
-.tag-btn-V { background: #fdecec; color: #c0392b; }
-.tag-btn-O { background: #eaf7ee; color: #1e8449; }
-.tag-btn-C { background: #f3ecfb; color: #7d3c98; }
-.tag-btn-M { background: #fdf3e3; color: #b9770e; }
-.tag-btn:hover:not(:disabled) { filter: brightness(0.95); }
+.tag-btn-S { background: var(--tag-s-bg); color: var(--tag-s-fg); }
+.tag-btn-V { background: var(--tag-v-bg); color: var(--tag-v-fg); }
+.tag-btn-O { background: var(--tag-o-bg); color: var(--tag-o-fg); }
+.tag-btn-C { background: var(--tag-c-bg); color: var(--tag-c-fg); }
+.tag-btn-M { background: var(--tag-m-bg); color: var(--tag-m-fg); }
+.tag-btn:hover:not(:disabled) { filter: brightness(1.08); }
 
-.result-box { margin-top: 1rem; padding: 0.85rem 1rem; border-radius: 10px; background: #f7faf7; border: 1px solid #dceedd; font-size: 14px; }
-.result-box.bad { background: #fdf5f5; border-color: #f2d6d6; }
-.wrong-list { font-size: 12.5px; color: #666; margin-top: 6px; line-height: 1.8; }
+.result-box { margin-top: 1rem; padding: 0.85rem 1rem; border-radius: 10px; background: var(--ok-soft); border: 1px solid var(--tag-o-bd); font-size: 14px; }
+.result-box.bad { background: var(--danger-soft); border-color: var(--tag-v-bd); }
+.wrong-list { font-size: 12.5px; color: var(--text-muted); margin-top: 6px; line-height: 1.8; }
+.result-head { display: flex; align-items: center; gap: 10px; }
+.celebrate-mascot { width: 48px; height: auto; flex-shrink: 0; animation: bounce 0.6s ease; }
+@keyframes bounce { 0% { transform: translateY(0) scale(0.9); opacity: 0; } 50% { transform: translateY(-6px) scale(1.04); opacity: 1; } 100% { transform: translateY(0) scale(1); } }
 
 .translate-block { margin-top: 1rem; }
 .translate-block label { margin-bottom: 6px; }
@@ -115,25 +211,102 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.6; }
 .compare-block { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 8px; }
 .compare-row { border-radius: 8px; padding: 0.55rem 0.75rem; font-size: 13.5px; line-height: 1.6; }
 .compare-row .compare-lbl { font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; display: block; margin-bottom: 2px; }
-.compare-row.mine { background: #fafaf8; border: 1px solid #eee; color: #444; }
-.compare-row.model { background: #eaf7ee; border: 1px solid #bfe6cc; color: #1e6b3a; }
+.compare-row.mine { background: var(--surface-sunken); border: 1px solid var(--border-soft); color: var(--text); }
+.compare-row.model { background: var(--tag-o-bg); border: 1px solid var(--tag-o-bd); color: var(--tag-o-fg); }
 
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
-.stat-cell { background: #fafaf8; border: 1px solid #eee; border-radius: 10px; padding: 0.6rem 0.75rem; text-align: center; }
-.stat-cell .num { font-size: 17px; font-weight: 700; color: #185FA5; }
-.stat-cell .lbl { font-size: 11px; color: #999; margin-top: 2px; }
+.stat-cell { background: var(--surface-sunken); border: 1px solid var(--border-soft); border-radius: 10px; padding: 0.6rem 0.75rem; text-align: center; }
+.stat-cell .num { font-size: 17px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.stat-cell .lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
 .custom-chunk-preview { display: flex; gap: 6px; flex-wrap: wrap; margin: 0.5rem 0; }
-.empty-note { color: #bbb; font-size: 12.5px; }
+.empty-note { color: var(--text-muted); font-size: 12.5px; }
+@media (prefers-reduced-motion: no-preference) {
+  .tab-panel.active { animation: fadeIn 0.15s ease-out; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .celebrate-mascot { animation: none; }
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---- figure collection / medals ---- */
+.figure-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 0.75rem 0 1.25rem; }
+.figure-card { width: 150px; background: var(--surface-sunken); border: 1px solid var(--border-soft); border-radius: 12px; padding: 0.85rem 0.75rem; text-align: center; }
+.figure-card.unlocked { border-color: var(--accent); background: var(--accent-soft); }
+.figure-card .figure-img-wrap { height: 68px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 6px; }
+.figure-card img { max-height: 68px; width: auto; }
+.figure-card.locked img { filter: grayscale(1) brightness(0.75); opacity: 0.55; }
+.figure-card .figure-title { font-size: 12.5px; font-weight: 700; color: var(--text-strong); }
+.figure-card.locked .figure-title { color: var(--text-muted); }
+.figure-card .figure-desc { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; min-height: 26px; }
+.figure-bar { height: 6px; border-radius: 999px; background: var(--border-soft); overflow: hidden; margin-top: 6px; }
+.figure-bar-fill { height: 100%; background: var(--accent); border-radius: 999px; }
+.figure-card .figure-state { font-size: 10px; font-weight: 700; margin-top: 4px; color: var(--accent); }
+.figure-card.locked .figure-state { color: var(--text-muted); }
+
+.medal-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.medal { width: 64px; text-align: center; }
+.medal-badge { width: 52px; height: 52px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 800; margin: 0 auto 4px; border: 2px solid var(--border); background: var(--surface-sunken); color: var(--text-muted); }
+.medal.unlocked .medal-badge { background: linear-gradient(145deg, #f5d98a, #d9a62e); border-color: #b8860b; color: #4a3400; box-shadow: 0 2px 4px rgba(184,134,11,0.35); }
+.medal-lbl { font-size: 10px; color: var(--text-muted); }
+.medal.unlocked .medal-lbl { color: var(--text); font-weight: 700; }
+
+/* ---- print tab ---- */
+.check-row { display: flex; align-items: center; }
+.check-inline { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text); font-weight: 500; cursor: pointer; }
+.check-inline input { width: auto; }
+
+.worksheet { background: #ffffff; color: #1a1a18; border: 1px solid #e0e0e0; border-radius: 14px; padding: 1.75rem; }
+.ws-header { text-align: center; border-bottom: 2px solid #1a1a18; padding-bottom: 1rem; margin-bottom: 1.25rem; }
+.ws-header h2 { font-size: 19px; margin-bottom: 0.6rem; color: #1a1a18; }
+.ws-meta { display: flex; justify-content: center; gap: 1.5rem; font-size: 13px; color: #333; }
+.ws-item { display: flex; gap: 10px; padding: 0.8rem 0; border-bottom: 1px dashed #ddd; break-inside: avoid; }
+.ws-num { font-weight: 800; color: #175fa0; min-width: 22px; }
+.ws-content { flex: 1; }
+.ws-sentence { font-size: 14.5px; line-height: 2.1; }
+.ws-chunk { display: inline-flex; flex-direction: column; align-items: center; margin: 0 5px 6px; vertical-align: top; }
+.ws-chunk-text { font-size: 14px; color: #1a1a18; }
+.ws-chunk-blank { width: 100%; min-width: 30px; border-bottom: 1px solid #999; height: 1.2em; margin-top: 3px; }
+.ws-translate-line { margin-top: 8px; border-bottom: 1px solid #bbb; height: 1.6em; }
+.ws-translate-caption { font-size: 11px; color: #999; margin-top: 10px; }
+.ws-study-trans { font-size: 13px; color: #175fa0; margin-top: 4px; }
+.ws-study-grammar { display: inline-block; background: #f0f0ee; color: #555; border-radius: 6px; padding: 1px 8px; font-size: 11px; margin-top: 4px; }
+.ws-study-tags .ws-tag { font-weight: 700; padding: 1px 6px; border-radius: 5px; font-size: 12.5px; margin-right: 3px; }
+/* worksheet always prints in light, ink-friendly colors regardless of app theme */
+.worksheet .tag-S { background: #e7f0fa; color: #175fa0; border: 1px solid #b9d3ef; }
+.worksheet .tag-V { background: #fbe9e7; color: #b2382d; border: 1px solid #f0c1ba; }
+.worksheet .tag-O { background: #e6f4ea; color: #1e7a44; border: 1px solid #bce2c8; }
+.worksheet .tag-C { background: #efe7f7; color: #6f3f96; border: 1px solid #d7c1ec; }
+.worksheet .tag-M { background: #fbf0dd; color: #a86a10; border: 1px solid #ecd6a4; }
+.answer-key { margin-top: 1.75rem; padding-top: 1rem; border-top: 2px solid #1a1a18; }
+.answer-key h3 { font-size: 14px; margin-bottom: 0.6rem; color: #1a1a18; }
+.answer-key ol { padding-left: 1.3rem; font-size: 12.5px; line-height: 1.9; color: #333; }
+.hide-answers .answer-key { display: none; }
+
+@media print {
+  body * { visibility: hidden; }
+  .worksheet, .worksheet * { visibility: visible; }
+  .worksheet { position: absolute; top: 0; left: 0; width: 100%; border: none; padding: 0; border-radius: 0; }
+  .no-print { display: none !important; }
+  .answer-key { page-break-before: always; }
+}
+
 @media (max-width: 560px) {
   .row2 { grid-template-columns: 1fr; }
+  .hero { align-items: center; }
+  .hero-mascot { width: 56px; }
 }
 </style>
 </head>
 <body>
 <div class="app">
-  <h1>🧩 영어 문장 끊어읽기 연습</h1>
-  <p class="subtitle">문장을 주어(S) · 동사(V) · 목적어(O) · 보어(C) · 수식어(M) 덩어리로 나누어 보고, 직접 표시하며 연습해요</p>
+  <div class="hero">
+    <img class="hero-mascot" src="assets/mascot-penguin.webp" alt="펭귄 마스코트" width="88" height="117">
+    <div class="hero-text">
+      <h1>영어 문장 끊어읽기 연습</h1>
+      <p class="subtitle">문장을 주어(S) · 동사(V) · 목적어(O) · 보어(C) · 수식어(M) 덩어리로 나누어 보고, 직접 표시하며 연습해요</p>
+    </div>
+  </div>
 
   <div class="level-row" id="levelRow"></div>
 
@@ -142,12 +315,16 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.6; }
     <button class="tab-btn" data-tab="practice">✍️ 연습 문제</button>
     <button class="tab-btn" data-tab="add">➕ 문장 추가</button>
     <button class="tab-btn" data-tab="stats">📊 학습 현황</button>
+    <button class="tab-btn" data-tab="print">🖨️ 인쇄</button>
   </nav>
 
   <!-- 학습 탭 -->
   <section id="tab-study" class="tab-panel active">
     <div class="card">
-      <h2 id="studyLevelTitle">학습</h2>
+      <div class="card-head">
+        <img class="card-mascot" src="assets/mascot-penguin.webp" alt="" width="40" height="53">
+        <h2 id="studyLevelTitle">학습</h2>
+      </div>
       <div class="legend" id="legendStudy"></div>
       <div id="studyList"></div>
     </div>
@@ -156,7 +333,10 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.6; }
   <!-- 연습 탭 -->
   <section id="tab-practice" class="tab-panel">
     <div class="card">
-      <h2>청크 분석 연습</h2>
+      <div class="card-head">
+        <img class="card-mascot" id="practiceMascot" src="assets/mascot-squirrel.webp" alt="" width="40" height="60">
+        <h2>청크 분석 연습</h2>
+      </div>
       <div class="track-row" id="trackRow"></div>
       <div class="legend" id="legendPractice"></div>
       <div class="practice-progress" id="practiceProgress"></div>
@@ -167,7 +347,10 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.6; }
   <!-- 문장 추가 탭 -->
   <section id="tab-add" class="tab-panel">
     <div class="card">
-      <h2>내 문장 추가하기</h2>
+      <div class="card-head">
+        <img class="card-mascot" src="assets/mascot-bear.webp" alt="" width="40" height="52">
+        <h2>내 문장 추가하기</h2>
+      </div>
       <p class="hint">
         문장을 원하는 청크 단위로 <code>/</code> 로 구분해서 입력하면, 각 청크에 태그(S/V/O/C/M)를 지정할 수 있어요.<br>
         예: <code>She / gave / me / a nice present.</code>
@@ -206,12 +389,59 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.6; }
   <!-- 학습 현황 탭 -->
   <section id="tab-stats" class="tab-panel">
     <div class="card">
+      <h2>🏆 나의 피규어 컬렉션</h2>
+      <p class="hint">꾸준히 연습하면 피규어와 메달을 모을 수 있어요. 조건을 채우면 자동으로 잠금이 풀려요!</p>
+      <div class="figure-row" id="figureRow"></div>
+      <h3>레벨 완주 메달</h3>
+      <div class="medal-row" id="medalRow"></div>
+    </div>
+    <div class="card">
       <h2>난이도별 학습 현황</h2>
       <div id="statsWrap"></div>
       <div class="btn-row" style="margin-top:1rem;">
         <button class="btn danger" id="resetStatsBtn">🗑️ 기록 초기화</button>
       </div>
     </div>
+  </section>
+
+  <!-- 인쇄 탭 -->
+  <section id="tab-print" class="tab-panel">
+    <div class="card no-print">
+      <div class="card-head">
+        <img class="card-mascot" src="assets/mascot-bear.webp" alt="" width="40" height="52">
+        <h2>인쇄물 만들기</h2>
+      </div>
+      <p class="hint">
+        선택한 난이도의 문장으로 오프라인 학습지를 만들어요. 화면에서 미리보기를 만든 뒤 인쇄 버튼을 누르면 돼요.
+      </p>
+      <div class="row2">
+        <div class="field">
+          <label>난이도</label>
+          <select id="printLevel"></select>
+        </div>
+        <div class="field">
+          <label>문제 수</label>
+          <input type="text" id="printCount" value="10" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field">
+        <label>학습지 유형</label>
+        <select id="printType">
+          <option value="chunk">청크 분석 학습지 (S/V/O/C/M 빈칸 채우기)</option>
+          <option value="chunk_translate">청크 + 해석 학습지 (빈칸 + 해석 쓰기 줄)</option>
+          <option value="study">복습용 학습 자료 (정답·해석 모두 표시)</option>
+        </select>
+      </div>
+      <div class="field check-row">
+        <label class="check-inline"><input type="checkbox" id="printAnswerKey" checked> 맨 뒤에 정답지 포함</label>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="printBuildBtn">📝 미리보기 만들기</button>
+        <button class="btn" id="printNowBtn" disabled>🖨️ 인쇄하기</button>
+      </div>
+    </div>
+
+    <div id="printPreviewWrap"></div>
   </section>
 </div>
 
@@ -852,8 +1082,13 @@ const STATS_KEY = 'chunkAppStats';
 const LEVEL_KEY = 'chunkAppCurrentLevel';
 const MODE_KEY = 'chunkAppPracticeMode';
 const TRACKS = {
-  chunk: { label: '🧩 구문 분석만', short: '구문 분석', hint: '문장을 하나씩 클릭한 뒤, 아래 태그 버튼으로 역할을 지정해보세요.' },
-  chunk_translate: { label: '🧩📝 구문 + 해석 쓰기', short: '구문+해석', hint: '청크 태그를 모두 지정한 뒤, 문장 전체를 우리말로 해석해서 적어보세요.' },
+  chunk: { label: '구문 분석만', short: '구문 분석', hint: '문장을 하나씩 클릭한 뒤, 아래 태그 버튼으로 역할을 지정해보세요.', mascot: 'squirrel' },
+  chunk_translate: { label: '구문 + 해석 쓰기', short: '구문+해석', hint: '청크 태그를 모두 지정한 뒤, 문장 전체를 우리말로 해석해서 적어보세요.', mascot: 'bear' },
+};
+const MASCOTS = {
+  penguin: { src: 'assets/mascot-penguin.webp', name: '펭귄' },
+  squirrel: { src: 'assets/mascot-squirrel.webp', name: '다람쥐' },
+  bear: { src: 'assets/mascot-bear.webp', name: '곰' },
 };
 
 function loadCustom() {
@@ -963,9 +1198,12 @@ let practiceOrderPerLevel = {}; // level -> shuffled list of sentence ids, and c
 
 function renderTrackRow() {
   const wrap = document.getElementById('trackRow');
-  wrap.innerHTML = Object.keys(TRACKS).map(key =>
-    `<button class="track-pill ${key === practiceMode ? 'active' : ''}" data-track="${key}">${TRACKS[key].label}</button>`
-  ).join('');
+  wrap.innerHTML = Object.keys(TRACKS).map(key => {
+    const m = MASCOTS[TRACKS[key].mascot];
+    return `<button class="track-pill ${key === practiceMode ? 'active' : ''}" data-track="${key}">
+      <img src="${m.src}" alt="">${escapeHtml(TRACKS[key].label)}
+    </button>`;
+  }).join('');
   wrap.querySelectorAll('.track-pill').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.track === practiceMode) return;
@@ -1022,6 +1260,8 @@ function updateGradeButtonState() {
 
 function renderPracticeTab() {
   document.getElementById('legendPractice').innerHTML = legendHtml();
+  const practiceMascotEl = document.getElementById('practiceMascot');
+  if (practiceMascotEl) practiceMascotEl.src = MASCOTS[TRACKS[practiceMode].mascot].src;
   const list = sentencesForLevel(currentLevel);
   const st = getLevelStats(currentLevel);
   document.getElementById('practiceProgress').textContent =
@@ -1136,9 +1376,13 @@ function renderResultBox() {
       <div class="compare-row model"><span class="compare-lbl">✅ 모범 해석</span>${s.translation ? escapeHtml(s.translation) : '(모범 해석 없음)'}</div>
     </div>
   ` : (s.translation ? `<div class="sent-meta">🇰🇷 ${escapeHtml(s.translation)}</div>` : '');
+  const celebrateMascot = MASCOTS[TRACKS[practiceMode].mascot].src;
   box.innerHTML = `
     <div class="result-box ${perfect ? '' : 'bad'}">
-      <strong>${perfect ? '🎉 청크 완벽해요!' : `청크 ${correct} / ${total} 개 정답`}</strong>
+      <div class="result-head">
+        ${perfect ? `<img class="celebrate-mascot" src="${celebrateMascot}" alt="">` : ''}
+        <strong>${perfect ? '청크 완벽해요!' : `청크 ${correct} / ${total} 개 정답`}</strong>
+      </div>
       ${compareHtml}
       ${s.note ? `<div class="sent-note">💡 ${escapeHtml(s.note)}</div>` : ''}
     </div>
@@ -1235,6 +1479,63 @@ function renderCustomList() {
   });
 }
 
+/* ================= figure collection / rewards ================= */
+const FIGURES = [
+  { key: 'penguin', mascot: 'penguin', title: '연습왕 펭귄', desc: '전체 연습 50문장 달성', goal: 50, metric: o => o.attempted },
+  { key: 'squirrel', mascot: 'squirrel', title: '퍼펙트 다람쥐', desc: '문장 완벽정답 30개 달성', goal: 30, metric: o => o.correctSentences },
+  { key: 'bear', mascot: 'bear', title: '해석왕 곰', desc: '해석 쓰기 20회 달성', goal: 20, metric: o => o.translationAttempts || 0 },
+];
+
+function getOverallStats() {
+  const totals = { attempted: 0, correctSentences: 0, chunkTotal: 0, chunkCorrect: 0, translationAttempts: 0 };
+  LEVELS.forEach(lv => {
+    const st = getLevelStats(lv);
+    totals.attempted += st.attempted;
+    totals.correctSentences += st.correctSentences;
+    totals.chunkTotal += st.chunkTotal;
+    totals.chunkCorrect += st.chunkCorrect;
+    totals.translationAttempts += (st.translationAttempts || 0);
+  });
+  return totals;
+}
+
+function renderFigureRow() {
+  const wrap = document.getElementById('figureRow');
+  if (!wrap) return;
+  const overall = getOverallStats();
+  wrap.innerHTML = FIGURES.map(f => {
+    const raw = f.metric(overall);
+    const val = Math.min(raw, f.goal);
+    const unlocked = raw >= f.goal;
+    const pct = Math.round(val / f.goal * 100);
+    return `
+      <div class="figure-card ${unlocked ? 'unlocked' : 'locked'}">
+        <div class="figure-img-wrap"><img src="${MASCOTS[f.mascot].src}" alt="${escapeHtml(MASCOTS[f.mascot].name)}"></div>
+        <div class="figure-title">${unlocked ? '🏅 ' : '🔒 '}${escapeHtml(f.title)}</div>
+        <div class="figure-desc">${escapeHtml(f.desc)}</div>
+        <div class="figure-bar"><div class="figure-bar-fill" style="width:${pct}%"></div></div>
+        <div class="figure-state">${unlocked ? '획득 완료!' : `${raw} / ${f.goal}`}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderMedalRow() {
+  const wrap = document.getElementById('medalRow');
+  if (!wrap) return;
+  wrap.innerHTML = LEVELS.map(lv => {
+    const st = getLevelStats(lv);
+    const total = sentencesForLevel(lv).length;
+    const unlocked = total > 0 && st.attempted >= total;
+    return `
+      <div class="medal ${unlocked ? 'unlocked' : ''}" title="${escapeHtml(lv)} 전체 문장 1회 이상 연습하면 메달 획득">
+        <div class="medal-badge">${unlocked ? '🏅' : escapeHtml(lv)}</div>
+        <div class="medal-lbl">${escapeHtml(lv)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
 /* ================= stats tab ================= */
 function renderStatsTab() {
   const wrap = document.getElementById('statsWrap');
@@ -1256,10 +1557,94 @@ function renderStatsTab() {
 }
 
 document.getElementById('resetStatsBtn').addEventListener('click', () => {
-  if (!confirm('모든 학습 기록을 초기화할까요? 되돌릴 수 없습니다.')) return;
+  if (!confirm('모든 학습 기록을 초기화할까요? 되돌릴 수 없습니다. (모은 피규어와 메달도 초기화돼요)')) return;
   localStorage.removeItem(STATS_KEY);
   renderAll();
 });
+
+/* ================= print tab ================= */
+function renderPrintLevelSelect() {
+  const sel = document.getElementById('printLevel');
+  if (!sel) return;
+  const keep = sel.dataset.touched === '1' ? sel.value : currentLevel;
+  sel.innerHTML = LEVELS.map(lv => `<option value="${lv}" ${lv === keep ? 'selected' : ''}>${lv} (${sentencesForLevel(lv).length}문장)</option>`).join('');
+  if (!sel.dataset.bound) {
+    sel.dataset.bound = '1';
+    sel.addEventListener('change', () => { sel.dataset.touched = '1'; });
+  }
+}
+
+function buildWsChunkBlanks(s) {
+  return s.chunks.map(ch => `
+    <span class="ws-chunk"><span class="ws-chunk-text">${escapeHtml(ch.t)}</span><span class="ws-chunk-blank"></span></span>
+  `).join('');
+}
+
+function renderWorksheet(level, sentences, type, includeKey) {
+  const wrap = document.getElementById('printPreviewWrap');
+  const titleMap = { chunk: '청크 분석 학습지', chunk_translate: '청크 + 해석 학습지', study: '복습용 학습 자료' };
+
+  const itemsHtml = sentences.map((s, i) => {
+    if (type === 'study') {
+      const tagsHtml = s.chunks.map(ch => `<span class="ws-tag tag-${ch.g}">${escapeHtml(ch.t)} <b>${ch.g}</b></span>`).join(' ');
+      return `
+        <li class="ws-item">
+          <div class="ws-num">${i + 1}.</div>
+          <div class="ws-content">
+            <div class="ws-sentence">${escapeHtml(s.text)}</div>
+            <div class="ws-study-tags">${tagsHtml}</div>
+            ${s.translation ? `<div class="ws-study-trans">🇰🇷 ${escapeHtml(s.translation)}</div>` : ''}
+            ${s.grammar ? `<span class="ws-study-grammar">${escapeHtml(s.grammar)}</span>` : ''}
+          </div>
+        </li>`;
+    }
+    const translateLine = type === 'chunk_translate'
+      ? `<div class="ws-translate-line"></div><div class="ws-translate-caption">해석을 써보세요</div>` : '';
+    return `
+      <li class="ws-item">
+        <div class="ws-num">${i + 1}.</div>
+        <div class="ws-content">
+          <div class="ws-sentence">${buildWsChunkBlanks(s)}</div>
+          ${translateLine}
+        </div>
+      </li>`;
+  }).join('');
+
+  const keyHtml = includeKey ? `
+    <div class="answer-key">
+      <h3>정답</h3>
+      <ol>${sentences.map(s => `<li>${s.chunks.map(ch => `${escapeHtml(ch.t)}(${ch.g})`).join(' / ')}${s.translation ? ' — ' + escapeHtml(s.translation) : ''}</li>`).join('')}</ol>
+    </div>` : '';
+
+  wrap.innerHTML = `
+    <div class="no-print btn-row" style="margin-bottom:0.75rem;">
+      <span class="hint" style="margin:0;">아래가 인쇄될 내용의 미리보기예요. 화면 크기에 따라 실제 인쇄 결과와 줄바꿈이 다를 수 있어요.</span>
+    </div>
+    <div class="worksheet" id="worksheetEl">
+      <div class="ws-header">
+        <h2>${escapeHtml(titleMap[type])} · ${escapeHtml(level)}</h2>
+        <div class="ws-meta"><span>이름: ______________</span><span>날짜: ______________</span><span>점수: ______ / ${sentences.length}</span></div>
+      </div>
+      <ol style="list-style:none;">${itemsHtml}</ol>
+      ${keyHtml}
+    </div>
+  `;
+}
+
+document.getElementById('printBuildBtn').addEventListener('click', () => {
+  const level = document.getElementById('printLevel').value;
+  const countRaw = parseInt(document.getElementById('printCount').value, 10);
+  const type = document.getElementById('printType').value;
+  const includeKey = document.getElementById('printAnswerKey').checked;
+  const pool = sentencesForLevel(level);
+  if (pool.length === 0) { alert('이 난이도에는 문장이 없어요.'); return; }
+  const count = Math.min(Math.max(countRaw || 10, 1), pool.length, 60);
+  const chosen = shuffle(pool).slice(0, count);
+  renderWorksheet(level, chosen, type, includeKey);
+  document.getElementById('printNowBtn').disabled = false;
+});
+
+document.getElementById('printNowBtn').addEventListener('click', () => window.print());
 
 /* ================= tabs ================= */
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1294,6 +1679,9 @@ function renderAll() {
   renderAddLevelSelect();
   renderCustomList();
   renderStatsTab();
+  renderFigureRow();
+  renderMedalRow();
+  renderPrintLevelSelect();
 }
 renderAll();
 </script>
