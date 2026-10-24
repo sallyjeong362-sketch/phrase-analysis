@@ -182,6 +182,12 @@ textarea:disabled { opacity: 0.6; }
 .sentence-item .sent-text { font-size: 14.5px; font-weight: 600; color: var(--text-strong); }
 .sentence-item .sent-summary { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
 .custom-badge { background: var(--accent); color: #fff; border-radius: 5px; padding: 0 6px; font-size: 10.5px; margin-left: 6px; }
+.needs-chunk-badge { background: var(--danger); color: #fff; border-radius: 5px; padding: 0 6px; font-size: 10.5px; margin-left: 6px; }
+.passage-group { border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 0.85rem; margin-bottom: 14px; background: var(--surface-sunken); }
+.passage-group-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.passage-name { font-weight: 800; font-size: 13.5px; color: var(--text-strong); }
+.passage-meta { font-size: 11px; color: var(--text-muted); margin-left: 8px; }
+.passage-group .sentence-item { background: var(--surface); }
 
 /* practice */
 .practice-progress { font-size: 12.5px; color: var(--text-muted); margin-bottom: 0.5rem; font-variant-numeric: tabular-nums; }
@@ -421,6 +427,39 @@ textarea:disabled { opacity: 0.6; }
 
   <!-- 문장 추가 탭 -->
   <section id="tab-add" class="tab-panel">
+    <div class="card">
+      <div class="card-head">
+        <img class="card-mascot" src="assets/mascot-penguin.webp" alt="" width="40" height="53">
+        <h2>📄 지문 통째로 추가하기</h2>
+      </div>
+      <p class="hint">
+        여러 문장으로 된 지문을 붙여넣거나 .txt 파일을 올리면 문장 단위로 자동으로 나눠드려요. 나뉜 문장은 지문 이름(폴더)별로 아래 "내가 추가한 문장" 목록에 모이고,
+        각 문장을 열어 청크(S/V/O/C/M)를 지정해주면 학습·연습·인쇄에 바로 쓸 수 있어요. <strong>문장 나누기만 자동이고, 정확한 청크 지정은 직접 해주셔야 해요.</strong>
+      </p>
+      <div class="row2">
+        <div class="field">
+          <label>지문 이름 (폴더명)</label>
+          <input type="text" id="passageName" placeholder="예: 3월 모의고사 지문 1">
+        </div>
+        <div class="field">
+          <label>난이도</label>
+          <select id="passageLevel"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>지문 파일 올리기 (.txt)</label>
+        <input type="file" id="passageFile" accept=".txt,text/plain">
+      </div>
+      <div class="field">
+        <label>또는 지문 붙여넣기</label>
+        <textarea id="passageRaw" placeholder="여러 문장으로 된 영어 지문을 붙여넣으세요."></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="passageSplitBtn">문장으로 나누기</button>
+      </div>
+      <div id="passagePreviewArea"></div>
+    </div>
+
     <div class="card">
       <div class="card-head">
         <img class="card-mascot" src="assets/mascot-bear.webp" alt="" width="40" height="52">
@@ -1869,7 +1908,10 @@ function recordAttempt(level, chunkTotal, chunkCorrect, isTranslationTrack) {
 let customSentences = loadCustom();
 
 function sentencesForLevel(level) {
-  return SENTENCES.filter(s => s.level === level).concat(customSentences.filter(s => s.level === level));
+  // custom sentences imported from a passage start with chunks:[] (not yet tagged) —
+  // exclude those from study/practice/print until someone fills in their chunks.
+  return SENTENCES.filter(s => s.level === level)
+    .concat(customSentences.filter(s => s.level === level && s.chunks && s.chunks.length > 0));
 }
 
 /* ================= level state ================= */
@@ -2262,10 +2304,13 @@ function renderResultBox() {
 
 /* ================= add tab ================= */
 let addChunkDraft = [];
+let editingDraftId = null; // when set, "저장하기" updates this existing (passage-imported) sentence instead of creating a new one
 
 function renderAddLevelSelect() {
-  const sel = document.getElementById('addLevel');
-  sel.innerHTML = LEVELS.map(lv => `<option value="${lv}" ${lv === currentLevel ? 'selected' : ''}>${lv}</option>`).join('');
+  const opts = LEVELS.map(lv => `<option value="${lv}" ${lv === currentLevel ? 'selected' : ''}>${lv}</option>`).join('');
+  document.getElementById('addLevel').innerHTML = opts;
+  const passageSel = document.getElementById('passageLevel');
+  if (passageSel) passageSel.innerHTML = opts;
 }
 
 document.getElementById('addParseBtn').addEventListener('click', () => {
@@ -2300,29 +2345,136 @@ function renderAddChunkTagArea() {
   });
 }
 
+function resetSingleAddForm() {
+  addChunkDraft = [];
+  editingDraftId = null;
+  document.getElementById('addChunksRaw').value = '';
+  document.getElementById('addChunkTagArea').innerHTML = '';
+  document.getElementById('addGrammar').value = '';
+  document.getElementById('addTranslation').value = '';
+  document.getElementById('addSaveBtn').textContent = '이 문장 저장하기';
+}
+
+function startEditDraft(id) {
+  const s = customSentences.find(x => x.id === id);
+  if (!s) return;
+  editingDraftId = id;
+  addChunkDraft = [];
+  document.getElementById('addLevel').value = s.level;
+  document.getElementById('addChunksRaw').value = s.text;
+  document.getElementById('addGrammar').value = s.grammar || '';
+  document.getElementById('addTranslation').value = s.translation || '';
+  document.getElementById('addChunkTagArea').innerHTML = '';
+  document.getElementById('addSaveBtn').textContent = '✏️ 이 문장 청크 저장하기';
+  const target = document.querySelector('#tab-add .card');
+  if (target) target.scrollIntoView({ behavior: 'smooth' });
+}
+
 document.getElementById('addSaveBtn').addEventListener('click', () => {
   if (addChunkDraft.length === 0) { alert('먼저 "청크 나누기" 버튼으로 문장을 나눠주세요.'); return; }
   const level = document.getElementById('addLevel').value;
   const grammar = document.getElementById('addGrammar').value.trim();
   const translation = document.getElementById('addTranslation').value.trim();
   const text = addChunkDraft.map(d => d.t).join(' ');
-  const sentence = {
-    id: 'custom_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    level, text, grammar, translation,
-    chunks: addChunkDraft.map(d => ({ t: d.t, g: d.g })),
-    custom: true
-  };
-  customSentences.push(sentence);
+  const chunks = addChunkDraft.map(d => ({ t: d.t, g: d.g }));
+
+  if (editingDraftId) {
+    const existing = customSentences.find(s => s.id === editingDraftId);
+    if (existing) {
+      existing.level = level; existing.text = text; existing.grammar = grammar;
+      existing.translation = translation; existing.chunks = chunks;
+    }
+  } else {
+    customSentences.push({
+      id: 'custom_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      level, text, grammar, translation, chunks, custom: true
+    });
+  }
   saveCustom(customSentences);
-  addChunkDraft = [];
-  document.getElementById('addChunksRaw').value = '';
-  document.getElementById('addChunkTagArea').innerHTML = '';
-  document.getElementById('addGrammar').value = '';
-  document.getElementById('addTranslation').value = '';
+  resetSingleAddForm();
   alert('문장이 저장되었어요!');
   practiceOrderPerLevel[level] = null;
   renderAll();
 });
+
+/* ---- 지문 통째로 추가 ---- */
+let passageSplitSentences = [];
+
+function splitIntoSentences(text) {
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+  if (!cleaned) return [];
+  // split after . ! ? when followed by a space + capital letter / quote, or end of string.
+  // Not perfect with abbreviations (Mr., U.S. ...) — the preview below is editable so those can be fixed by hand.
+  return cleaned.split(/(?<=[.?!])\s+(?=[A-Z"'])/).map(s => s.trim()).filter(Boolean);
+}
+
+document.getElementById('passageFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => { document.getElementById('passageRaw').value = reader.result; };
+  reader.readAsText(file, 'UTF-8');
+});
+
+document.getElementById('passageSplitBtn').addEventListener('click', () => {
+  const raw = document.getElementById('passageRaw').value;
+  passageSplitSentences = splitIntoSentences(raw);
+  if (passageSplitSentences.length === 0) { alert('나눌 문장이 없어요. 지문을 붙여넣거나 파일을 올려주세요.'); return; }
+  renderPassagePreview();
+});
+
+function renderPassagePreview() {
+  const wrap = document.getElementById('passagePreviewArea');
+  if (passageSplitSentences.length === 0) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `
+    <div class="field" style="margin-top:0.75rem;">
+      <label>나뉜 문장 미리보기 — ${passageSplitSentences.length}개 (한 줄에 한 문장, 필요하면 직접 고쳐주세요)</label>
+      <textarea id="passagePreviewEdit" style="min-height:180px;">${escapeHtml(passageSplitSentences.join('\n'))}</textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="passageConfirmBtn">이 문장들 모두 추가하기</button>
+    </div>
+  `;
+  document.getElementById('passageConfirmBtn').addEventListener('click', confirmPassageImport);
+}
+
+function confirmPassageImport() {
+  const lines = document.getElementById('passagePreviewEdit').value.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) { alert('추가할 문장이 없어요.'); return; }
+  const passageName = document.getElementById('passageName').value.trim() || '이름 없는 지문';
+  const level = document.getElementById('passageLevel').value;
+  const passageId = 'passage_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  lines.forEach(text => {
+    customSentences.push({
+      id: 'custom_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+      level, text, grammar: '', translation: '',
+      chunks: [], // not yet tagged — filled in later via "청크 입력하기" below
+      custom: true, passageId, passageName
+    });
+  });
+  saveCustom(customSentences);
+  passageSplitSentences = [];
+  document.getElementById('passageRaw').value = '';
+  document.getElementById('passageFile').value = '';
+  document.getElementById('passageName').value = '';
+  document.getElementById('passagePreviewArea').innerHTML = '';
+  alert(`${lines.length}개 문장이 "${passageName}" 지문으로 추가됐어요. 아래 "내가 추가한 문장"에서 각 문장을 열어 청크를 지정해주세요.`);
+  renderAll();
+}
+
+function renderCustomSentenceItem(s) {
+  const needsChunks = !s.chunks || s.chunks.length === 0;
+  return `
+    <div class="sentence-item">
+      <div class="sent-text">[${escapeHtml(s.level)}] ${escapeHtml(s.text)}${needsChunks ? '<span class="needs-chunk-badge">청크 필요</span>' : ''}</div>
+      <div class="sent-summary">${s.grammar ? escapeHtml(s.grammar) : ''}</div>
+      <div class="btn-row">
+        ${needsChunks ? `<button class="btn small primary" data-edit="${s.id}">✏️ 청크 입력하기</button>` : ''}
+        <button class="btn small danger" data-id="${s.id}">삭제</button>
+      </div>
+    </div>
+  `;
+}
 
 function renderCustomList() {
   const wrap = document.getElementById('customList');
@@ -2330,19 +2482,54 @@ function renderCustomList() {
     wrap.innerHTML = '<p class="empty-note">아직 추가한 문장이 없어요.</p>';
     return;
   }
-  wrap.innerHTML = customSentences.map(s => `
-    <div class="sentence-item">
-      <div class="sent-text">[${s.level}] ${escapeHtml(s.text)}</div>
-      <div class="sent-summary">${s.grammar ? escapeHtml(s.grammar) : ''}</div>
-      <div class="btn-row">
-        <button class="btn small danger" data-id="${s.id}">삭제</button>
+
+  const groups = {};
+  const standalone = [];
+  customSentences.forEach(s => {
+    if (s.passageId) {
+      if (!groups[s.passageId]) groups[s.passageId] = { name: s.passageName || '(이름 없음)', level: s.level, items: [] };
+      groups[s.passageId].items.push(s);
+    } else {
+      standalone.push(s);
+    }
+  });
+
+  const groupHtml = Object.keys(groups).map(pid => {
+    const g = groups[pid];
+    const doneCount = g.items.filter(s => s.chunks && s.chunks.length > 0).length;
+    return `
+      <div class="passage-group">
+        <div class="passage-group-head">
+          <div>
+            <span class="passage-name">📄 ${escapeHtml(g.name)}</span>
+            <span class="passage-meta">${escapeHtml(g.level)} · ${doneCount}/${g.items.length}문장 완료</span>
+          </div>
+          <button class="btn small danger" data-passage-del="${pid}">지문 전체 삭제</button>
+        </div>
+        ${g.items.map(renderCustomSentenceItem).join('')}
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
+
+  wrap.innerHTML = groupHtml + standalone.map(renderCustomSentenceItem).join('');
+
   wrap.querySelectorAll('button[data-id]').forEach(btn => {
     btn.addEventListener('click', () => {
       if (!confirm('이 문장을 삭제할까요?')) return;
       customSentences = customSentences.filter(s => s.id !== btn.dataset.id);
+      saveCustom(customSentences);
+      practiceOrderPerLevel = {};
+      renderAll();
+    });
+  });
+  wrap.querySelectorAll('button[data-edit]').forEach(btn => {
+    btn.addEventListener('click', () => startEditDraft(btn.dataset.edit));
+  });
+  wrap.querySelectorAll('button[data-passage-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('이 지문에 속한 문장을 모두 삭제할까요?')) return;
+      const pid = btn.dataset.passageDel;
+      customSentences = customSentences.filter(s => s.passageId !== pid);
       saveCustom(customSentences);
       practiceOrderPerLevel = {};
       renderAll();
